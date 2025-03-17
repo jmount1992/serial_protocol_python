@@ -6,16 +6,22 @@ from serial_protocol.utils import hexstring_to_bytearray
 
 def encode(data: Union[str, list, bytearray]) -> bytearray:
     """
-    Encodes the given data using COBS encoding.
+    Encodes the given data using Consistent Overhead Byte Stuffing (COBS).
 
-    Handles input conversion from different formats (str, list, bytearray) before
-    passing it to `encode_bytearray`.
+    This function handles input conversion before passing the data
+    to `encode_bytearray()`.
 
     Args:
         data (Union[str, list, bytearray]): The input data to encode.
+            - `str`: A hex string (e.g., "00 11 22").
+            - `list`: A list of integer values.
+            - `bytearray`: A raw bytearray.
 
     Returns:
         bytearray: The COBS-encoded byte sequence.
+
+    Raises:
+        TypeError: If `data` is not one of the supported types.
     """
     if isinstance(data, str):
         data = hexstring_to_bytearray(data)
@@ -29,19 +35,21 @@ def encode(data: Union[str, list, bytearray]) -> bytearray:
 
 def encode_bytearray(data: bytearray, delimiter: int = 0x00) -> bytearray:
     """
-    Encodes the given data using Consistent Overhead Byte Stuffing (COBS).
+    Encodes a bytearray using Consistent Overhead Byte Stuffing (COBS).
 
-    COBS replaces zero bytes (`0x00`) in the input with a length-based encoding.
-    This ensures that encoded data contains no zeros except for the final frame delimiter (`0x00`).
+    COBS ensures that the encoded data contains no occurrences of `0x00`,
+    except for the final frame delimiter `0x00`. It does this by replacing
+    zero bytes with a length marker.
 
     Args:
-        data (Union[str, list, bytearray]): The input data to encode.
-            - `str`: A hex string (e.g., "00 11 22").
-            - `list`: A list of integer byte values.
-            - `bytearray`: A raw bytearray.
+        data (bytearray): The input bytearray to encode.
 
     Returns:
         bytearray: The COBS-encoded byte sequence.
+
+    Raises:
+        TypeError: If `data` is not a bytearray.
+        ValueError: If `data` is empty.
     """
     if not isinstance(data, bytearray):
         raise TypeError("Input data must be a bytearray.")
@@ -84,15 +92,22 @@ def encode_bytearray(data: bytearray, delimiter: int = 0x00) -> bytearray:
 
 def decode(data: Union[str, list, bytearray]) -> bytearray:
     """
-    Decodes the given COBS-encoded data back into its original form.
+    Decodes COBS-encoded data back into its decoded form.
 
-    Handles input conversion before passing it to `decode_bytearray`.
+    This function handles input conversion before passing the data
+    to `decode_bytearray()`.
 
     Args:
         data (Union[str, list, bytearray]): The COBS-encoded data.
+            - `str`: A hex string (e.g., "00 11 22").
+            - `list`: A list of integer values.
+            - `bytearray`: A raw bytearray.
 
     Returns:
-        bytearray: The original decoded byte sequence.
+        bytearray: The decoded byte sequence.
+
+    Raises:
+        TypeError: If `data` is not one of the supported types.
     """
     if isinstance(data, str):
         data = hexstring_to_bytearray(data)
@@ -108,20 +123,33 @@ def decode_bytearray(data: bytearray) -> bytearray:
     """
     Decodes a COBS-encoded bytearray back to its original form.
 
+    COBS decoding reconstructs the original byte sequence by inserting zero bytes
+    at positions indicated by the length markers.
+
     Args:
         data (bytearray): The COBS-encoded byte sequence.
 
     Returns:
         bytearray: The original decoded byte sequence.
+
+    Raises:
+        TypeError: If `data` is not a bytearray.
+        ValueError: If `data` has an invalid format:
+            - Must have at least two elements.
+            - Must end with a valid frame delimiter (`0x00`).
+            - Cannot contain multiple frame delimiters.
+            - Must not have invalid zero markers.
     """
     if not isinstance(data, bytearray):
         raise TypeError("Input data must be a bytearray.")
     if len(data) < 2:
         raise ValueError("Input data must have at least two elements.")
     if data[-1] != 0x00:
-        raise ValueError("Invalid COBS-encoded data: missing final frame delimiter (0x00)")
+        raise ValueError("Invalid COBS-encoded data: missing final "
+                         "frame delimiter (0x00)")
     if data.count(0x00) > 1:
-        raise ValueError("Invalid COBS-encoded data: more than one frame delimiter (0x00)")
+        raise ValueError("Invalid COBS-encoded data: more than one "
+                         "frame delimiter (0x00)")
 
     # Single zero encoded - special case
     if len(data) == 2 and data[0] == 0x01:

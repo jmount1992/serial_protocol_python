@@ -152,3 +152,4 @@ def test_decode_invalid_inputs():
         cobs.decode(123)  # Integer is not valid
         cobs.decode(3.14)  # Float is not valid
         cobs.decode({"key": "value"})  # Dictionary is not valid
+

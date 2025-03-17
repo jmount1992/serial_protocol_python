@@ -5,13 +5,15 @@ from serial_protocol import utils
 
 
 def test_hexstring_to_bytearray():
-    assert utils.hexstring_to_bytearray("00 11 22") == bytearray([0x00, 0x11, 0x22])
-    assert utils.hexstring_to_bytearray("0x00 0x11 0x22") == bytearray([0x00, 0x11, 0x22])
+    data = bytearray([0x00, 0x11, 0x22])
+    assert utils.hexstring_to_bytearray("00 11 22") == data
+    assert utils.hexstring_to_bytearray("0x00 0x11 0x22") == data
 
 
 def test_bytearray_to_hexstring():
-    assert utils.bytearray_to_hexstring(bytearray([0x00, 0x11, 0x22])) == "0x00 0x11 0x22"
-    assert utils.bytearray_to_hexstring(bytearray([0x00, 0x11, 0x22]), False) == "00 11 22"
+    data = bytearray([0x00, 0x11, 0x22])
+    assert utils.bytearray_to_hexstring(data) == "0x00 0x11 0x22"
+    assert utils.bytearray_to_hexstring(data, False) == "00 11 22"
 
 
 def test_is_0x_format():
@@ -22,5 +24,7 @@ def test_is_0x_format():
 
 
 def test_bytearray_to_decstring():
-    assert utils.bytearray_to_decstring(bytearray([0, 17, 255])) == "000 017 255"
-    assert utils.bytearray_to_decstring(bytearray([1, 2, 3, 4, 5])) == "001 002 003 004 005"
+    data1 = bytearray([0, 17, 255])
+    data2 = bytearray([1, 2, 3, 4, 5])
+    assert utils.bytearray_to_decstring(data1) == "000 017 255"
+    assert utils.bytearray_to_decstring(data2) == "001 002 003 004 005"

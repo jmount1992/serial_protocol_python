@@ -27,7 +27,7 @@ def encode(data: Union[str, list, bytearray]) -> bytearray:
     return encode_bytearray(data)
 
 
-def encode_bytearray(data: bytearray) -> bytearray:
+def encode_bytearray(data: bytearray, delimiter: int = 0x00) -> bytearray:
     """
     Encodes the given data using Consistent Overhead Byte Stuffing (COBS).
 
@@ -45,6 +45,8 @@ def encode_bytearray(data: bytearray) -> bytearray:
     """
     if not isinstance(data, bytearray):
         raise TypeError("Input data must be a bytearray.")
+    if len(data) == 0:
+        raise ValueError("Input data must not be empty.")
 
     encoded = bytearray([0x00])  # with place holder for first marker
     zero_block_len = 1  # Length counter for zero markers
@@ -114,26 +116,39 @@ def decode_bytearray(data: bytearray) -> bytearray:
     """
     if not isinstance(data, bytearray):
         raise TypeError("Input data must be a bytearray.")
+    if len(data) < 2:
+        raise ValueError("Input data must have at least two elements.")
+    if data[-1] != 0x00:
+        raise ValueError("Invalid COBS-encoded data: missing final frame delimiter (0x00)")
+    if data.count(0x00) > 1:
+        raise ValueError("Invalid COBS-encoded data: more than one frame delimiter (0x00)")
+
+    # Single zero encoded - special case
+    if len(data) == 2 and data[0] == 0x01:
+        return bytearray([0x00])
+
+    # Other cases
+    idx = 0
     decoded = bytearray()
+    while idx < len(data) - 1:
+        # first byte will be number of bytes until next delimiter
+        bytes_until_delim = data[idx]
 
-    num_bytes_until_zero = data[0] - 1  # index of first zero
-    overhead_byte_added = (0xff == data[0])  # set to true if more than 255 bytes before next zero in decoded data
-    for byte in data[1:]:
-        if byte == 0x00:
-            if len(decoded) == 0:
-                decoded.append(0x00)
-            continue  # found delimiter frame
+        # Ensure zero marker does not point beyond the available data
+        if bytes_until_delim + idx >= len(data):
+            raise ValueError("Invalid COBS-encoded data: invalid zero marker")
 
-        if num_bytes_until_zero != 0:
-            decoded.append(byte)
-            num_bytes_until_zero -= 1
-        else:
-            # check for actual 0 or added byte
-            if overhead_byte_added:
-                overhead_byte_added = False
-            else:
-                decoded.append(0x00)
-            num_bytes_until_zero = byte - 1
-            overhead_byte_added = (0xff == byte)
+        # Move to data section
+        idx += 1
+        for _ in range(bytes_until_delim - 1):
+            decoded.append(data[idx])
+            idx += 1
+
+        # Insert zero unless this was a max-length block (0xff)
+        # or at the end of the data
+        overhead_byte = bytes_until_delim == 0xff
+        data_left_to_decode = idx < len(data) - 1
+        if not overhead_byte and data_left_to_decode:
+            decoded.append(0x00)
 
     return decoded

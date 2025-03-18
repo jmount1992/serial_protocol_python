@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "SerialProtocol_Python"
 version = "0.0.0"
@@ -14,16 +18,28 @@ maintainers = [
   {name = "James Mount", email = "jmount1992@gmail.com"}
 ]
 classifiers = [
-  "Programming Language :: Python"
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "Topic :: Software Development",
+  "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+  "crc == 7.1.0",
 ]
 
-dynamic = ["dependencies", "optional-dependencies"]
-
-[tool.setuptools.dynamic]
-dependencies = { file = ["requirements.txt"] }
-
-[tool.setuptools.dynamic.optional-dependencies]
-dev = { file = ["requirements-dev.txt"] }
+[project.optional-dependencies]
+dev = [
+  "pytest == 8.3.5",
+  "pytest-cov == 6.0.0",
+  "sphinx == 5.0.0",
+  "sphinx-autodoc-typehints == 1.19.*",
+  "sphinx-rtd-theme == 1.1.*",
+  "sphinx-toolbox == 3.1.*",
+]
 
 [project.urls]
-repository = "https://github.com/jmount1992/serial_protocol_python"
+Homepage = "https://jamesmount.tech/serial_protocol_python/"
+Documentation = "https://jamesmount.tech/serial_protocol_python/"
+Repository = "https://github.com/jmount1992/serial_protocol_python"
+Issues = "hhttps://github.com/jmount1992/serial_protocol_python/issues"
+Changelog = "https://github.com/jmount1992/serial_protocol_python/blob/master/CHANGELOG.md"

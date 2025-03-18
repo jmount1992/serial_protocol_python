@@ -1,5 +1,19 @@
 #!/usr/bin/env python3
 
+from enum import Enum
+import struct
+
+
+class MaxUintValues(Enum):
+    UINT8_MAX = 255
+    UINT16_MAX = 65535
+    UINT32_MAX = 4294967295
+
+
+class FloatByteSize(Enum):
+    FLOAT32 = 4  # IEEE 754 single-precision
+    FLOAT64 = 8  # IEEE 754 double-precision
+
 
 def bytearray_to_hexstring(data: bytearray, use_0x_format: bool = True) -> str:
     """
@@ -106,3 +120,71 @@ def bytearray_to_decstring(data: bytearray) -> str:
         '000 017 255'
     """
     return " ".join("{:03d}".format(x) for x in data)
+
+
+def int_to_bytearray(value: int, max_value: MaxUintValues) -> bytearray:
+    """Convert an integer to a bytearray of appropriate length based on max value.
+
+    Args:
+        value (int): The integer value to encode.
+        max_value (MaxUintValues): The max value determining byte size.
+
+    Returns:
+        bytearray: The encoded integer as bytes.
+
+    Raises:
+        ValueError: If max_value is not a valid MaxUintValues.
+        ValueError: If value is out of range.
+    """
+    # Ensure max value is of MaxUintValues type and if not
+    # make sure it is a valid value of one of the MaxUintValues before
+    # converting it to the MaxUintValues enum type
+    if not isinstance(max_value, MaxUintValues):
+        if max_value not in {e.value for e in MaxUintValues}:
+            raise ValueError("Invalid value for max_data_length attribute.")
+        max_value = MaxUintValues(max_value)
+
+    # Determine byte size needed (default to single byte, max 255 value)
+    num_bytes = 1
+    if max_value == MaxUintValues.UINT16_MAX:
+        num_bytes = 2
+    elif max_value == MaxUintValues.UINT32_MAX:
+        num_bytes = 4
+
+    # Determine actual max value and ensure value is in range
+    max_value = (2**(num_bytes*8)) - 1
+    if not (0 <= value <= max_value):
+        raise ValueError(f"value must be in range [0, {max_value}].")
+
+    # Convert integer to bytearray (Little Endian)
+    return bytearray(value.to_bytes(num_bytes, byteorder="little"))
+
+
+def float_to_bytearray(value: float, num_bytes: FloatByteSize) -> bytearray:
+    """Convert a float to a 4-byte or 8-byte bytearray using IEEE 754 format.
+
+    Args:
+        value (float): The float to encode.
+        num_bytes (FloatByteSize): The number of bytes (4 or 8).
+
+    Returns:
+        bytearray: The encoded float as bytes.
+
+    Raises:
+        ValueError: If num_bytes is not a valid FloatByteSize.
+    """
+    # Ensure max value is of FloatByteSize type and if not
+    # make sure it is a valid value of one of the FloatByteSize before
+    # converting it to the FloatByteSize enum type
+    if not isinstance(num_bytes, FloatByteSize):
+        if num_bytes not in {e.value for e in FloatByteSize}:
+            raise ValueError("Invalid value for float_byte_size attribute.")
+        num_bytes = FloatByteSize(num_bytes)
+
+    # Determine format char
+    format_char = "f"
+    if num_bytes == FloatByteSize.FLOAT64:
+        format_char = "d"
+
+    # Convert float to bytearray (Little Endian)
+    return bytearray(struct.pack(format_char, value))

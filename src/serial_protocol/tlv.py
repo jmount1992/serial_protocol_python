@@ -61,29 +61,37 @@ class tlv_packet():
     def encode(self,
                type_: Union[int, bytearray],
                value_: Union[int, float, bytearray]):
+        
+        type_ = self.__validate_and_convert_type(type_)
+        value_ = self.__validate_and_convert_value(value_)
+        length_ = utils.int_to_bytearray(len(value_), self.max_data_length)
 
-        # Valid input types for type_ and value_ arguments
+        # Assemble and return packet
+        return bytearray(type_ + length_ + value_)
+
+    def __validate_and_convert_type(self,
+                                    type_: Union[int, bytearray]
+                                    ) -> bytearray:
+        """Validate and convert type_ to a bytearray (1-byte identifier)."""
         if not isinstance(type_, (int, bytearray)):
             raise TypeError("Input type_ must be an integer or bytearray.")
-        if not isinstance(value_, (int, float, bytearray)):
-            raise TypeError("Input value_ must be an integer, float, or bytearray")
-
-        # Determine if type_ is valid value
         if isinstance(type_, bytearray) and len(type_) != 1:
             raise ValueError("Input type_ must be exactly 1 byte.")
         if isinstance(type_, int):
             if not (0 <= type_ <= 255):
                 raise ValueError("Input type_ must be in the range [0,255].")
             type_ = bytearray([type_])
+        return type_
 
-        # Create bytearray for value, if not already a byte array
+    def __validate_and_convert_value(self,
+                                     value_: Union[int, float, bytearray]
+                                     ) -> bytearray:
+        """Convert value_ to the appropriate byte representation."""
         if isinstance(value_, int):
-            value_ = utils.int_to_bytearray(value_, self.max_data_value)
-        elif isinstance(value_, float):
-            value_ = utils.float_to_bytearray(value_, self.float_byte_size)
+            return utils.int_to_bytearray(value_, self.max_data_value)
+        if isinstance(value_, float):
+            return utils.float_to_bytearray(value_, self.float_byte_size)
+        if isinstance(value_, bytearray):
+            return value_
 
-        # Create length bytearray
-        length_ = utils.int_to_bytearray(len(value_), self.max_data_length)
-
-        # Assemble and return packet
-        return bytearray(type_ + length_ + value_)
+        raise TypeError("Input value_ must be an integer, float, or bytearray.")

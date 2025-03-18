@@ -31,6 +31,7 @@ dependencies = [
 dev = [
   "pytest == 8.3.5",
   "pytest-cov == 6.0.0",
+  "hypothesis == 6.129.*",
   "sphinx == 5.0.0",
   "sphinx-autodoc-typehints == 1.19.*",
   "sphinx-rtd-theme == 1.1.*",

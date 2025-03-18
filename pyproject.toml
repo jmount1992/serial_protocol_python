@@ -17,14 +17,13 @@ classifiers = [
   "Programming Language :: Python"
 ]
 
-dependencies = [
-]
+dynamic = ["dependencies", "optional-dependencies"]
 
-[project.optional-dependencies]
-test = [
-  "pytest < 5.0.0",
-  "pytest-cov[all]"
-]
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.txt"] }
+
+[tool.setuptools.dynamic.optional-dependencies]
+dev = { file = ["requirements-dev.txt"] }
 
 [project.urls]
 repository = "https://github.com/jmount1992/serial_protocol_python"

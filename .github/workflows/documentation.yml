@@ -1,11 +1,10 @@
-name: build
+name: documentation
 
 on:
   workflow_dispatch:
-  on: 
-    push:
-      branches:
-        - 'main'
+  push:
+    branches:
+      - 'main'
 
 env:
   CACHE_NUMBER: 0  # increase to reset cache manually

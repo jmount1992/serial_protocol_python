@@ -8,7 +8,7 @@ version = "0.0.0"
 description = "A lightweight Python library for developing simple but robust serial protocols for embedded devices."
 readme = "README.md"
 requires-python = ">=3.12"
-license = {file = "LICENSE.txt"}
+license = {file = "LICENSE"}
 keywords = ["Serial", "Protocol"]
 authors = [
   {email = "jmount1992@gmail.com"},
@@ -41,5 +41,5 @@ dev = [
 Homepage = "https://jamesmount.tech/serial_protocol_python/"
 Documentation = "https://jamesmount.tech/serial_protocol_python/"
 Repository = "https://github.com/jmount1992/serial_protocol_python"
-Issues = "hhttps://github.com/jmount1992/serial_protocol_python/issues"
+Issues = "https://github.com/jmount1992/serial_protocol_python/issues"
 Changelog = "https://github.com/jmount1992/serial_protocol_python/blob/master/CHANGELOG.md"

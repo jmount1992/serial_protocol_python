@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import pytest
+from hypothesis import given, strategies as st
 from serial_protocol import cobs
 
 
@@ -30,6 +31,13 @@ def test_encode_bytearray_single_zero():
     """Encoding a single 0x00 byte array"""
     data = bytearray([0x00])
     expected = bytearray([0x01, 0x00])
+    assert cobs.encode_bytearray(data) == expected
+
+
+def test_encode_bytearray_singe_nonzero():
+    """Encoding a single non-zero byte array"""
+    data = bytearray([0x18])
+    expected = bytearray([0x02, 0x18, 0x00])
     assert cobs.encode_bytearray(data) == expected
 
 
@@ -124,3 +132,17 @@ def test_encode_invalid_inputs():
         cobs.encode(123)
         cobs.encode(3.14)
         cobs.encode({"key": "value"})
+
+
+# Advanced Encode/Decode Tests
+@given(st.binary(min_size=1, max_size=512))
+def test_cobs_encode_decode_round_trip_hypothesis(data):
+    try:
+        data = bytearray(data)
+        encoded = cobs.encode_bytearray(data)
+        decoded = cobs.decode_bytearray(encoded)
+        assert decoded == data
+    except Exception as e:
+        print(f"Failed for input: {data.hex()} - Error: {str(e)}... "
+              f"Encoded: {encoded.hex()}")
+        raise

@@ -55,6 +55,8 @@ def encode_bytearray(data: bytearray, delimiter: int = 0x00) -> bytearray:
         raise TypeError("Input data must be a bytearray.")
     if len(data) == 0:
         raise ValueError("Input data must not be empty.")
+    if len(data) == 1 and data[0] == 0x00:
+        return bytearray([0x01, 0x00]) # special case
 
     encoded = bytearray([0x00])  # with place holder for first marker
     zero_block_len = 1  # Length counter for zero markers
@@ -84,9 +86,8 @@ def encode_bytearray(data: bytearray, delimiter: int = 0x00) -> bytearray:
             zero_block_len += 1
 
     # Handle the final marker
-    if len(data) != 1:
-        encoded[zero_marker_pos] = zero_block_len
-        encoded.append(0x00)  # Frame delimiter
+    encoded[zero_marker_pos] = zero_block_len
+    encoded.append(0x00)  # Frame delimiter
     return encoded
 
 

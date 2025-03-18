@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 
-import ast
-
 
 def bytearray_to_hexstring(data: bytearray, use_0x_format: bool = True) -> str:
     """
@@ -52,7 +50,7 @@ def hexstring_to_bytearray(hexstr: str) -> bytearray:
     hexstr = hexstr.strip()
 
     if is_0x_format(hexstr):
-        byte_values = [ast.literal_eval(token) for token in hexstr.split()]
+        byte_values = [int(token, 16) for token in hexstr.split()]
     else:
         byte_values = bytearray.fromhex(hexstr)
 

@@ -1,8 +1,8 @@
-name: build
+name: documentation
 
 on:
   workflow_dispatch:
-  pushes:
+  push:
     branches:
       - 'main'
 

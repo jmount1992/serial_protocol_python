@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>serial_protocol.utils &mdash; Serial Protocol - Python 0.0.0 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> Serial Protocol - Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../cobs.html">COBS Encode/Decode</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../utils.html">Utilities</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Serial Protocol - Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">serial_protocol.utils</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for serial_protocol.utils</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">ast</span>
+
+
+<div class="viewcode-block" id="bytearray_to_hexstring"><a class="viewcode-back" href="../../utils.html#serial_protocol.utils.bytearray_to_hexstring">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">bytearray_to_hexstring</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="nb">bytearray</span><span class="p">,</span> <span class="n">use_0x_format</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Converts a bytearray to a space-separated hex string representation.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        data (bytearray): The input byte sequence.</span>
+<span class="sd">        use_0x_format (bool, optional): If True, prefixes each byte with &#39;0x&#39;.</span>
+<span class="sd">                                        Defaults to True.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        str: A space-separated string of hexadecimal values.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; bytearray_to_hexstring(bytearray([0, 17, 34]), use_0x_format=True)</span>
+<span class="sd">        &#39;0x00 0x11 0x22&#39;</span>
+<span class="sd">        &gt;&gt;&gt; bytearray_to_hexstring(bytearray([0, 17, 34]), use_0x_format=False)</span>
+<span class="sd">        &#39;00 11 22&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">fmt</span> <span class="o">=</span> <span class="s2">&quot;0x</span><span class="si">{:02x}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">use_0x_format</span> <span class="k">else</span> <span class="s2">&quot;</span><span class="si">{:02x}</span><span class="s2">&quot;</span>
+    <span class="k">return</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">fmt</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">data</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="hexstring_to_bytearray"><a class="viewcode-back" href="../../utils.html#serial_protocol.utils.hexstring_to_bytearray">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">hexstring_to_bytearray</span><span class="p">(</span><span class="n">hexstr</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytearray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Converts a space-separated hex string into a bytearray.</span>
+
+<span class="sd">    Detects whether the input uses &#39;0x&#39; prefixes or plain hex values and </span>
+<span class="sd">    converts accordingly. Raises an error if mixed formats are detected.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        hexstr (str): A space-separated string of hexadecimal values.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        bytearray: The corresponding byte sequence.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: If the string contains a mix of &#39;0x&#39; prefixed and plain hex formats.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; hexstring_to_bytearray(&quot;0x00 0x11 0xff&quot;)</span>
+<span class="sd">        bytearray(b&#39;\\x00\\x11\\xff&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; hexstring_to_bytearray(&quot;00 11 ff&quot;)</span>
+<span class="sd">        bytearray(b&#39;\\x00\\x11\\xff&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; hexstring_to_bytearray(&quot;00 0x11 ff&quot;)</span>
+<span class="sd">        ValueError: The hex string contains mixed &#39;0x&#39; and plain hex formats.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">hexstr</span> <span class="o">=</span> <span class="n">hexstr</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">is_0x_format</span><span class="p">(</span><span class="n">hexstr</span><span class="p">):</span>
+        <span class="n">byte_values</span> <span class="o">=</span> <span class="p">[</span><span class="n">ast</span><span class="o">.</span><span class="n">literal_eval</span><span class="p">(</span><span class="n">token</span><span class="p">)</span> <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">hexstr</span><span class="o">.</span><span class="n">split</span><span class="p">()]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">byte_values</span> <span class="o">=</span> <span class="nb">bytearray</span><span class="o">.</span><span class="n">fromhex</span><span class="p">(</span><span class="n">hexstr</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="nb">bytearray</span><span class="p">(</span><span class="n">byte_values</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="is_0x_format"><a class="viewcode-back" href="../../utils.html#serial_protocol.utils.is_0x_format">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">is_0x_format</span><span class="p">(</span><span class="n">hexstr</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Determines whether a given hex string uses the &#39;0x&#39; prefix format.</span>
+
+<span class="sd">    Ensures that the entire string follows a consistent format, either all</span>
+<span class="sd">    &#39;0x&#39; prefixed or all plain hex. Raises an error if mixed formats are found.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        hexstr (str): A space-separated string of hexadecimal values.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        bool: True if all tokens use the &#39;0x&#39; prefix, False if all are plain hex.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: If the string contains a mix of &#39;0x&#39; prefixed and plain hex formats.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; is_0x_format(&quot;0x00 0x11 0xff&quot;)</span>
+<span class="sd">        True</span>
+<span class="sd">        &gt;&gt;&gt; is_0x_format(&quot;00 11 ff&quot;)</span>
+<span class="sd">        False</span>
+<span class="sd">        &gt;&gt;&gt; is_0x_format(&quot;00 0x11 ff&quot;)</span>
+<span class="sd">        ValueError: The hex string contains mixed &#39;0x&#39; and plain hex formats.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">tokens</span> <span class="o">=</span> <span class="n">hexstr</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+    <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">token</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;0x&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">tokens</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">token</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;0x&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">tokens</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The hex string contains mixed &#39;0x&#39; and plain hex formats.&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">False</span></div>
+
+
+<div class="viewcode-block" id="bytearray_to_decstring"><a class="viewcode-back" href="../../utils.html#serial_protocol.utils.bytearray_to_decstring">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">bytearray_to_decstring</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="nb">bytearray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Converts a bytearray to a space-separated decimal string representation.</span>
+
+<span class="sd">    Each byte value is represented as a three-digit decimal number (zero-padded).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        data (bytearray): The input byte sequence.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        str: A space-separated string of decimal values.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; bytearray_to_decstring(bytearray([0, 17, 255]))</span>
+<span class="sd">        &#39;000 017 255&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{:03d}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">data</span><span class="p">)</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, James Mount.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -132,7 +132,7 @@ class TLVPacket:
         decoder_map = {
             TLVValueReturnType.BYTEARRAY: lambda b: b,
             TLVValueReturnType.INT: utils.bytearray_to_int,
-            TLVValueReturnType.FLOAT: lambda b: self._decode_float_checked(b),
+            TLVValueReturnType.FLOAT: lambda b: self._decode_float(b),
         }
 
         try:
@@ -142,7 +142,7 @@ class TLVPacket:
 
         return type_, length_, value_
 
-    def _decode_float_checked(self, b: bytearray) -> float:
+    def _decode_float(self, b: bytearray) -> float:
         """Helper to decode float with byte size check."""
         if len(b) != self.float_byte_size.num_bytes:
             raise ValueError(

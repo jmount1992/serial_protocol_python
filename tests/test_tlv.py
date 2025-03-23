@@ -69,8 +69,8 @@ def test_tlv_packet_property_setters_invalid(attr, invalid_value):
 @pytest.mark.parametrize("max_length, max_value", product(utils.MaxUInt, utils.MaxUInt))
 def test_encode_decode_int_roundtrip(max_length, max_value):
     packet = tlv.TLVPacket(max_data_length=max_length, max_data_value=max_value)
-    type_ = random.randint(0, 255)
-    value_ = random.randint(0, max_value.max_value)
+    type_ = random.randint(0, 255)  # nosec
+    value_ = random.randint(0, max_value.max_value)  # nosec
     encoded = packet.encode(type_, value_)
     decoded = packet.decode(encoded, return_value_as=tlv.TLVValueReturnType.INT)
     assert decoded[0] == type_

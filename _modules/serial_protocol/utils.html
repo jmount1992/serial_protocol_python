@@ -68,112 +68,286 @@
   <h1>Source code for serial_protocol.utils</h1><div class="highlight"><pre>
 <span></span><span class="ch">#!/usr/bin/env python3</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">struct</span>
 
-<div class="viewcode-block" id="bytearray_to_hexstring"><a class="viewcode-back" href="../../utils.html#serial_protocol.utils.bytearray_to_hexstring">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">bytearray_to_hexstring</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="nb">bytearray</span><span class="p">,</span> <span class="n">use_0x_format</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+
+<span class="c1">########################</span>
+<span class="c1"># --- ENUM HELPERS --- #</span>
+<span class="c1">########################</span>
+
+<div class="viewcode-block" id="MaxUInt"><a class="viewcode-back" href="../../utils.html#serial_protocol.utils.MaxUInt">[docs]</a><span class="k">class</span><span class="w"> </span><span class="nc">MaxUInt</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Converts a bytearray to a space-separated hex string representation.</span>
+<span class="sd">    Enumeration of maximum unsigned integer values with associated byte sizes.</span>
 
-<span class="sd">    Args:</span>
-<span class="sd">        data (bytearray): The input byte sequence.</span>
-<span class="sd">        use_0x_format (bool, optional): If True, prefixes each byte with &#39;0x&#39;.</span>
-<span class="sd">                                        Defaults to True.</span>
+<span class="sd">    Members:</span>
+<span class="sd">        UINT8:  8-bit unsigned integer (1 byte, max 255)</span>
+<span class="sd">        UINT16: 16-bit unsigned integer (2 bytes, max 65535)</span>
+<span class="sd">        UINT32: 32-bit unsigned integer (4 bytes, max 4294967295)</span>
 
-<span class="sd">    Returns:</span>
-<span class="sd">        str: A space-separated string of hexadecimal values.</span>
+<span class="sd">    Properties:</span>
+<span class="sd">        num_bytes (int): Number of bytes required to represent the value.</span>
+<span class="sd">        max_value (int): Maximum value for the unsigned integer type.</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; bytearray_to_hexstring(bytearray([0, 17, 34]), use_0x_format=True)</span>
-<span class="sd">        &#39;0x00 0x11 0x22&#39;</span>
-<span class="sd">        &gt;&gt;&gt; bytearray_to_hexstring(bytearray([0, 17, 34]), use_0x_format=False)</span>
-<span class="sd">        &#39;00 11 22&#39;</span>
+<span class="sd">        &gt;&gt;&gt; MaxUInt.UINT16.num_bytes</span>
+<span class="sd">        2</span>
+<span class="sd">        &gt;&gt;&gt; MaxUInt.UINT16.max_value</span>
+<span class="sd">        65535</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">fmt</span> <span class="o">=</span> <span class="s2">&quot;0x</span><span class="si">{:02x}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">use_0x_format</span> <span class="k">else</span> <span class="s2">&quot;</span><span class="si">{:02x}</span><span class="s2">&quot;</span>
-    <span class="k">return</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">fmt</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">data</span><span class="p">)</span></div>
+    <span class="n">UINT8</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">255</span><span class="p">)</span>
+    <span class="n">UINT16</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">65535</span><span class="p">)</span>
+    <span class="n">UINT32</span> <span class="o">=</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">4294967295</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">num_bytes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">max_value</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span></div>
 
 
-<div class="viewcode-block" id="hexstring_to_bytearray"><a class="viewcode-back" href="../../utils.html#serial_protocol.utils.hexstring_to_bytearray">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">hexstring_to_bytearray</span><span class="p">(</span><span class="n">hexstr</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytearray</span><span class="p">:</span>
+<div class="viewcode-block" id="FloatPrecision"><a class="viewcode-back" href="../../utils.html#serial_protocol.utils.FloatPrecision">[docs]</a><span class="k">class</span><span class="w"> </span><span class="nc">FloatPrecision</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Converts a space-separated hex string into a bytearray.</span>
+<span class="sd">    Enumeration of IEEE 754 floating point precisions with byte size and format.</span>
 
-<span class="sd">    Detects whether the input uses &#39;0x&#39; prefixes or plain hex values and </span>
-<span class="sd">    converts accordingly. Raises an error if mixed formats are detected.</span>
+<span class="sd">    Members:</span>
+<span class="sd">        FLOAT32: 32-bit (4-byte) single-precision float (&#39;f&#39; format character)</span>
+<span class="sd">        FLOAT64: 64-bit (8-byte) double-precision float (&#39;d&#39; format character)</span>
+
+<span class="sd">    Properties:</span>
+<span class="sd">        num_bytes (int): Number of bytes used to represent the float.</span>
+<span class="sd">        format_char (str): Format character used for struct packing/unpacking.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; FloatPrecision.FLOAT64.num_bytes</span>
+<span class="sd">        8</span>
+<span class="sd">        &gt;&gt;&gt; FloatPrecision.FLOAT64.format_char</span>
+<span class="sd">        &#39;d&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">FLOAT32</span> <span class="o">=</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="s1">&#39;f&#39;</span><span class="p">)</span>  <span class="c1"># IEEE 754 single-precision</span>
+    <span class="n">FLOAT64</span> <span class="o">=</span> <span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span><span class="p">)</span>  <span class="c1"># IEEE 754 double-precision</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">num_bytes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">format_char</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="coerce_enum"><a class="viewcode-back" href="../../utils.html#serial_protocol.utils.coerce_enum">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">coerce_enum</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">enum_class</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Ensures that a given value is an instance of the provided Enum class.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        hexstr (str): A space-separated string of hexadecimal values.</span>
+<span class="sd">        value: The value to check or convert.</span>
+<span class="sd">        enum_class (Enum): The target Enum class.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        bytearray: The corresponding byte sequence.</span>
+<span class="sd">        Enum: An instance of the Enum class.</span>
 
 <span class="sd">    Raises:</span>
-<span class="sd">        ValueError: If the string contains a mix of &#39;0x&#39; prefixed and plain hex formats.</span>
-
-<span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; hexstring_to_bytearray(&quot;0x00 0x11 0xff&quot;)</span>
-<span class="sd">        bytearray(b&#39;\\x00\\x11\\xff&#39;)</span>
-<span class="sd">        &gt;&gt;&gt; hexstring_to_bytearray(&quot;00 11 ff&quot;)</span>
-<span class="sd">        bytearray(b&#39;\\x00\\x11\\xff&#39;)</span>
-<span class="sd">        &gt;&gt;&gt; hexstring_to_bytearray(&quot;00 0x11 ff&quot;)</span>
-<span class="sd">        ValueError: The hex string contains mixed &#39;0x&#39; and plain hex formats.</span>
+<span class="sd">        ValueError: If value cannot be converted to the Enum.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">hexstr</span> <span class="o">=</span> <span class="n">hexstr</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-
-    <span class="k">if</span> <span class="n">is_0x_format</span><span class="p">(</span><span class="n">hexstr</span><span class="p">):</span>
-        <span class="n">byte_values</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="mi">16</span><span class="p">)</span> <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">hexstr</span><span class="o">.</span><span class="n">split</span><span class="p">()]</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">byte_values</span> <span class="o">=</span> <span class="nb">bytearray</span><span class="o">.</span><span class="n">fromhex</span><span class="p">(</span><span class="n">hexstr</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="nb">bytearray</span><span class="p">(</span><span class="n">byte_values</span><span class="p">)</span></div>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">enum_class</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">value</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">enum_class</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid value for </span><span class="si">{</span><span class="n">enum_class</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="is_0x_format"><a class="viewcode-back" href="../../utils.html#serial_protocol.utils.is_0x_format">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">is_0x_format</span><span class="p">(</span><span class="n">hexstr</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="c1">##########################</span>
+<span class="c1"># --- FORMAT HELPERS --- #</span>
+<span class="c1">##########################</span>
+
+<div class="viewcode-block" id="is_0x_format"><a class="viewcode-back" href="../../utils.html#serial_protocol.utils.is_0x_format">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">is_0x_format</span><span class="p">(</span><span class="n">hex_string</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Determines whether a given hex string uses the &#39;0x&#39; prefix format.</span>
 
-<span class="sd">    Ensures that the entire string follows a consistent format, either all</span>
-<span class="sd">    &#39;0x&#39; prefixed or all plain hex. Raises an error if mixed formats are found.</span>
-
 <span class="sd">    Args:</span>
-<span class="sd">        hexstr (str): A space-separated string of hexadecimal values.</span>
+<span class="sd">        hex_string (str): A space-separated string of hexadecimal values.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        bool: True if all tokens use the &#39;0x&#39; prefix, False if all are plain hex.</span>
 
 <span class="sd">    Raises:</span>
-<span class="sd">        ValueError: If the string contains a mix of &#39;0x&#39; prefixed and plain hex formats.</span>
+<span class="sd">        ValueError: If the string contains a mix of formats.</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; is_0x_format(&quot;0x00 0x11 0xff&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; is_0x_format(&quot;0x01 0x02 0x03&quot;)</span>
 <span class="sd">        True</span>
-<span class="sd">        &gt;&gt;&gt; is_0x_format(&quot;00 11 ff&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; is_0x_format(&quot;01 02 03&quot;)</span>
 <span class="sd">        False</span>
-<span class="sd">        &gt;&gt;&gt; is_0x_format(&quot;00 0x11 ff&quot;)</span>
-<span class="sd">        ValueError: The hex string contains mixed &#39;0x&#39; and plain hex formats.</span>
+<span class="sd">        &gt;&gt;&gt; is_0x_format(&quot;0x01 02&quot;)</span>
+<span class="sd">        ValueError</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">tokens</span> <span class="o">=</span> <span class="n">hexstr</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
-    <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">token</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;0x&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">tokens</span><span class="p">):</span>
+    <span class="n">tokens</span> <span class="o">=</span> <span class="n">hex_string</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+    <span class="n">has_0x</span> <span class="o">=</span> <span class="p">[</span><span class="n">token</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;0x&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">tokens</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">has_0x</span><span class="p">):</span>
         <span class="k">return</span> <span class="kc">True</span>
-    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">token</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;0x&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">tokens</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">has_0x</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The hex string contains mixed &#39;0x&#39; and plain hex formats.&quot;</span><span class="p">)</span>
     <span class="k">return</span> <span class="kc">False</span></div>
 
 
-<div class="viewcode-block" id="bytearray_to_decstring"><a class="viewcode-back" href="../../utils.html#serial_protocol.utils.bytearray_to_decstring">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">bytearray_to_decstring</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="nb">bytearray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Converts a bytearray to a space-separated decimal string representation.</span>
+<span class="c1">##############################</span>
+<span class="c1"># --- CONVERSION HELPERS --- #</span>
+<span class="c1">##############################</span>
 
-<span class="sd">    Each byte value is represented as a three-digit decimal number (zero-padded).</span>
+<div class="viewcode-block" id="bytearray_to_hexstring"><a class="viewcode-back" href="../../utils.html#serial_protocol.utils.bytearray_to_hexstring">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">bytearray_to_hexstring</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="nb">bytearray</span><span class="p">,</span> <span class="n">use_0x_format</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Converts a bytearray to a space-separated hex string.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        data (bytearray): The input byte sequence.</span>
+<span class="sd">        data (bytearray): The bytearray to convert.</span>
+<span class="sd">        use_0x_format (bool): Whether to include &#39;0x&#39; prefix. Default is True.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        str: A space-separated string of decimal values.</span>
+<span class="sd">        str: A space-separated hex string.</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; bytearray_to_decstring(bytearray([0, 17, 255]))</span>
-<span class="sd">        &#39;000 017 255&#39;</span>
+<span class="sd">        &gt;&gt;&gt; bytearray_to_hexstring(bytearray([0, 15, 255]))</span>
+<span class="sd">        &#39;0x00 0x0f 0xff&#39;</span>
+<span class="sd">        &gt;&gt;&gt; bytearray_to_hexstring(bytearray([0, 15, 255]), use_0x_format=False)</span>
+<span class="sd">        &#39;00 0f ff&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">fmt</span> <span class="o">=</span> <span class="s2">&quot;0x</span><span class="si">{:02x}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">use_0x_format</span> <span class="k">else</span> <span class="s2">&quot;</span><span class="si">{:02x}</span><span class="s2">&quot;</span>
+    <span class="k">return</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">fmt</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">data</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="hexstring_to_bytearray"><a class="viewcode-back" href="../../utils.html#serial_protocol.utils.hexstring_to_bytearray">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">hexstring_to_bytearray</span><span class="p">(</span><span class="n">hex_string</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytearray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Converts a space-separated hex string into a bytearray.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        hex_string (str): The hex string to convert.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        bytearray: The resulting bytearray.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: If mixed &#39;0x&#39; and plain hex formats are used.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; hexstring_to_bytearray(&quot;0x00 0x0f 0xff&quot;)</span>
+<span class="sd">        bytearray(b&#39;\x00\x0f\xff&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; hexstring_to_bytearray(&quot;00 0f ff&quot;)</span>
+<span class="sd">        bytearray(b&#39;\x00\x0f\xff&#39;)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">hex_string</span> <span class="o">=</span> <span class="n">hex_string</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">is_0x_format</span><span class="p">(</span><span class="n">hex_string</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">bytearray</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="mi">16</span><span class="p">)</span> <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">hex_string</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
+    <span class="k">return</span> <span class="nb">bytearray</span><span class="o">.</span><span class="n">fromhex</span><span class="p">(</span><span class="n">hex_string</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="bytearray_to_decstring"><a class="viewcode-back" href="../../utils.html#serial_protocol.utils.bytearray_to_decstring">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">bytearray_to_decstring</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="nb">bytearray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Converts a bytearray to a space-separated decimal string.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        data (bytearray): The bytearray to convert.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        str: A string of zero-padded 3-digit decimal numbers.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; bytearray_to_decstring(bytearray([1, 15, 255]))</span>
+<span class="sd">        &#39;001 015 255&#39;</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{:03d}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">data</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="int_to_bytearray"><a class="viewcode-back" href="../../utils.html#serial_protocol.utils.int_to_bytearray">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">int_to_bytearray</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">max_uint</span><span class="p">:</span> <span class="n">MaxUInt</span><span class="p">,</span> <span class="n">byteorder</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;little&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytearray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Converts an integer into a bytearray based on the MaxUInt limit.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        value (int): The integer value to convert.</span>
+<span class="sd">        max_uint (MaxUInt): The maximum uint type.</span>
+<span class="sd">        byteorder (str): Byte order (&#39;little&#39; or &#39;big&#39;). Default is &#39;little&#39;.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        bytearray: The resulting bytearray.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: If value is out of bounds.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; int_to_bytearray(1025, MaxUInt.UINT16)</span>
+<span class="sd">        bytearray(b&#39;\x01\x04&#39;)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">max_uint</span> <span class="o">=</span> <span class="n">coerce_enum</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">max_uint</span><span class="p">,</span> <span class="n">enum_class</span><span class="o">=</span><span class="n">MaxUInt</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">value</span> <span class="o">&lt;=</span> <span class="n">max_uint</span><span class="o">.</span><span class="n">max_value</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Value must be in range [0, </span><span class="si">{</span><span class="n">max_uint</span><span class="o">.</span><span class="n">max_value</span><span class="si">}</span><span class="s2">].&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">bytearray</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">to_bytes</span><span class="p">(</span><span class="n">max_uint</span><span class="o">.</span><span class="n">num_bytes</span><span class="p">,</span> <span class="n">byteorder</span><span class="o">=</span><span class="n">byteorder</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="bytearray_to_int"><a class="viewcode-back" href="../../utils.html#serial_protocol.utils.bytearray_to_int">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">bytearray_to_int</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">bytearray</span><span class="p">,</span> <span class="n">byteorder</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;little&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Converts a bytearray to an integer.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        value (bytearray): The input bytearray.</span>
+<span class="sd">        byteorder (str): Byte order (&#39;little&#39; or &#39;big&#39;). Default is &#39;little&#39;.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        int: The resulting integer.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; bytearray_to_int(bytearray([1, 4]))</span>
+<span class="sd">        1025</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">bytearray</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Input value must be of type bytearray.&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="o">.</span><span class="n">from_bytes</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">byteorder</span><span class="o">=</span><span class="n">byteorder</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="float_to_bytearray"><a class="viewcode-back" href="../../utils.html#serial_protocol.utils.float_to_bytearray">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">float_to_bytearray</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">precision</span><span class="p">:</span> <span class="n">FloatPrecision</span><span class="p">,</span> <span class="n">byteorder</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;little&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytearray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Converts a float to a bytearray using IEEE 754 format.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        value (float): The float to convert.</span>
+<span class="sd">        precision (FloatPrecision): Desired float precision.</span>
+<span class="sd">        byteorder (str): Byte order (&#39;little&#39; or &#39;big&#39;). Default is &#39;little&#39;.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        bytearray: The resulting bytearray.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; float_to_bytearray(3.14, FloatPrecision.FLOAT32)</span>
+<span class="sd">        bytearray(b&#39;\xc3\xf5H@&#39;)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">precision</span> <span class="o">=</span> <span class="n">coerce_enum</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">precision</span><span class="p">,</span> <span class="n">enum_class</span><span class="o">=</span><span class="n">FloatPrecision</span><span class="p">)</span>
+    <span class="n">packed</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">precision</span><span class="o">.</span><span class="n">format_char</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">bytearray</span><span class="p">(</span><span class="n">packed</span> <span class="k">if</span> <span class="n">byteorder</span> <span class="o">==</span> <span class="s2">&quot;little&quot;</span> <span class="k">else</span> <span class="n">packed</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="bytearray_to_float"><a class="viewcode-back" href="../../utils.html#serial_protocol.utils.bytearray_to_float">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">bytearray_to_float</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">bytearray</span><span class="p">,</span> <span class="n">precision</span><span class="p">:</span> <span class="n">FloatPrecision</span><span class="p">,</span> <span class="n">byteorder</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;little&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Converts a bytearray to a float using IEEE 754 format.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        value (bytearray): The bytearray to convert.</span>
+<span class="sd">        precision (FloatPrecision): Desired float precision.</span>
+<span class="sd">        byteorder (str): Byte order (&#39;little&#39; or &#39;big&#39;). Default is &#39;little&#39;.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        float: The resulting float.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; bytearray_to_float(bytearray(b&#39;\xc3\xf5H@&#39;), FloatPrecision.FLOAT32)</span>
+<span class="sd">        3.14</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">bytearray</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Input value must be of type bytearray.&quot;</span><span class="p">)</span>
+    <span class="n">precision</span> <span class="o">=</span> <span class="n">coerce_enum</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">precision</span><span class="p">,</span> <span class="n">enum_class</span><span class="o">=</span><span class="n">FloatPrecision</span><span class="p">)</span>
+    <span class="n">byte_seq</span> <span class="o">=</span> <span class="nb">bytes</span><span class="p">(</span><span class="n">value</span> <span class="k">if</span> <span class="n">byteorder</span> <span class="o">==</span> <span class="s2">&quot;little&quot;</span> <span class="k">else</span> <span class="n">value</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">struct</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="n">precision</span><span class="o">.</span><span class="n">format_char</span><span class="p">,</span> <span class="n">byte_seq</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span></div>
 </pre></div>
 
            </div>

@@ -11,21 +11,21 @@ from serial_protocol import tlv, utils
 def test_tlv_packet_constructor_without_args():
     packet = tlv.tlv_packet()
     assert isinstance(packet, tlv.tlv_packet) is True
-    assert packet.max_data_length.value == 255
-    assert packet.max_data_value.value == 255
-    assert packet.float_byte_size.value == 4
+    assert packet.max_data_length.value == (1, 255)
+    assert packet.max_data_value.value == (1, 255)
+    assert packet.float_byte_size.value == (4, 'f')
 
 
 # Test Valid Constructor Arguments
 @pytest.mark.parametrize("attr, enumval, intval", [
-    ("max_data_length", utils.MaxUintValues.UINT8_MAX, 255),
-    ("max_data_length", utils.MaxUintValues.UINT16_MAX, 65535),
-    ("max_data_length", utils.MaxUintValues.UINT32_MAX, 4294967295),
-    ("max_data_value", utils.MaxUintValues.UINT8_MAX, 255),
-    ("max_data_value", utils.MaxUintValues.UINT16_MAX, 65535),
-    ("max_data_value", utils.MaxUintValues.UINT32_MAX, 4294967295),
-    ("float_byte_size", utils.FloatByteSize.FLOAT32, 4),
-    ("float_byte_size", utils.FloatByteSize.FLOAT64, 8),
+    ("max_data_length", utils.MaxUInt.UINT8, (1, 255)),
+    ("max_data_length", utils.MaxUInt.UINT16, (2, 65535)),
+    ("max_data_length", utils.MaxUInt.UINT32, (4, 4294967295)),
+    ("max_data_value", utils.MaxUInt.UINT8, (1, 255)),
+    ("max_data_value", utils.MaxUInt.UINT16, (2, 65535)),
+    ("max_data_value", utils.MaxUInt.UINT32, (4, 4294967295)),
+    ("float_byte_size", utils.FloatPrecision.FLOAT32, (4, 'f')),
+    ("float_byte_size", utils.FloatPrecision.FLOAT64, (8, 'd')),
 ])
 def test_tlv_packet_constructor_valid(attr, enumval, intval):
     """Ensure TLV packet constructor accepts valid values."""
@@ -54,14 +54,14 @@ def test_tlv_packet_constructor_invalid(attr, value):
 
 # Test Property Getters & Setters
 @pytest.mark.parametrize("attr, values", [
-    ("max_data_length", [[utils.MaxUintValues.UINT8_MAX, 255],
-                         [utils.MaxUintValues.UINT16_MAX, 65535],
-                         [utils.MaxUintValues.UINT32_MAX, 4294967295]]),
-    ("max_data_value", [[utils.MaxUintValues.UINT8_MAX, 255],
-                        [utils.MaxUintValues.UINT16_MAX, 65535],
-                        [utils.MaxUintValues.UINT32_MAX, 4294967295]]),
-    ("float_byte_size", [[utils.FloatByteSize.FLOAT32, 4],
-                         [utils.FloatByteSize.FLOAT64, 8]]),
+    ("max_data_length", [[utils.MaxUInt.UINT8, 255],
+                         [utils.MaxUInt.UINT16, 65535],
+                         [utils.MaxUInt.UINT32, 4294967295]]),
+    ("max_data_value", [[utils.MaxUInt.UINT8, 255],
+                        [utils.MaxUInt.UINT16, 65535],
+                        [utils.MaxUInt.UINT32, 4294967295]]),
+    ("float_byte_size", [[utils.FloatPrecision.FLOAT32, 4],
+                         [utils.FloatPrecision.FLOAT64, 8]]),
 ])
 def test_tlv_packet_setters(attr, values):
     """Ensure valid values can be set via property setters."""
@@ -69,7 +69,6 @@ def test_tlv_packet_setters(attr, values):
     for (enumval, intval) in values:
         setattr(packet, attr, enumval)
         assert getattr(packet, attr) == enumval
-        assert getattr(getattr(packet, attr), "value") == intval
 
 
 # Test Invalid Property Setters
@@ -87,15 +86,15 @@ def test_tlv_packet_setters_invalid(attr, invalid_value):
 
 # Test Encode - Valid Cases
 @pytest.mark.parametrize("max_length, type_, value_, expected", [
-    (utils.MaxUintValues.UINT8_MAX, 0, 0, bytearray([0x00, 0x01, 0x00])),
-    (utils.MaxUintValues.UINT8_MAX, 128, 122, bytearray([0x80, 0x01, 0x7a])),
-    (utils.MaxUintValues.UINT8_MAX, 255, 255, bytearray([0xff, 0x01, 0xff])),
-    (utils.MaxUintValues.UINT16_MAX, 0, 0, bytearray([0x00, 0x01, 0x00, 0x00])),
-    (utils.MaxUintValues.UINT16_MAX, 128, 122, bytearray([0x80, 0x01, 0x00, 0x7a])),
-    (utils.MaxUintValues.UINT16_MAX, 255, 255, bytearray([0xff, 0x01, 0x00, 0xff])),
-    (utils.MaxUintValues.UINT32_MAX, 0, 0, bytearray([0x00, 0x01, 0x00, 0x00, 0x00, 0x00])),
-    (utils.MaxUintValues.UINT32_MAX, 128, 122, bytearray([0x80, 0x01, 0x00, 0x00, 0x00, 0x7a])),
-    (utils.MaxUintValues.UINT32_MAX, 255, 255, bytearray([0xff, 0x01, 0x00, 0x00, 0x00, 0xff]))
+    (utils.MaxUInt.UINT8, 0, 0, bytearray([0x00, 0x01, 0x00])),
+    (utils.MaxUInt.UINT8, 128, 122, bytearray([0x80, 0x01, 0x7a])),
+    (utils.MaxUInt.UINT8, 255, 255, bytearray([0xff, 0x01, 0xff])),
+    (utils.MaxUInt.UINT16, 0, 0, bytearray([0x00, 0x01, 0x00, 0x00])),
+    (utils.MaxUInt.UINT16, 128, 122, bytearray([0x80, 0x01, 0x00, 0x7a])),
+    (utils.MaxUInt.UINT16, 255, 255, bytearray([0xff, 0x01, 0x00, 0xff])),
+    (utils.MaxUInt.UINT32, 0, 0, bytearray([0x00, 0x01, 0x00, 0x00, 0x00, 0x00])),
+    (utils.MaxUInt.UINT32, 128, 122, bytearray([0x80, 0x01, 0x00, 0x00, 0x00, 0x7a])),
+    (utils.MaxUInt.UINT32, 255, 255, bytearray([0xff, 0x01, 0x00, 0x00, 0x00, 0xff]))
 ])
 def test_encode_valid_max_length(max_length, type_, value_, expected):
     packet = tlv.tlv_packet(max_data_length=max_length)
@@ -104,15 +103,15 @@ def test_encode_valid_max_length(max_length, type_, value_, expected):
 
 
 @pytest.mark.parametrize("max_value, type_, value_, expected", [
-    (utils.MaxUintValues.UINT8_MAX, 0, 0, bytearray([0x00, 0x01, 0x00])),
-    (utils.MaxUintValues.UINT8_MAX, 128, 122, bytearray([0x80, 0x01, 0x7a])),
-    (utils.MaxUintValues.UINT8_MAX, 255, 255, bytearray([0xff, 0x01, 0xff])),
-    (utils.MaxUintValues.UINT16_MAX, 0, 0, bytearray([0x00, 0x02, 0x00, 0x00])),
-    (utils.MaxUintValues.UINT16_MAX, 128, 122, bytearray([0x80, 0x02, 0x7a, 0x00])),
-    (utils.MaxUintValues.UINT16_MAX, 255, 65535, bytearray([0xff, 0x02, 0xff, 0xff])),
-    (utils.MaxUintValues.UINT32_MAX, 0, 0, bytearray([0x00, 0x04, 0x00, 0x00, 0x00, 0x00])),
-    (utils.MaxUintValues.UINT32_MAX, 128, 122, bytearray([0x80, 0x04, 0x7a, 0x00, 0x00, 0x00])),
-    (utils.MaxUintValues.UINT32_MAX, 255, 4294967295, bytearray([0xff, 0x04, 0xff, 0xff, 0xff, 0xff]))
+    (utils.MaxUInt.UINT8, 0, 0, bytearray([0x00, 0x01, 0x00])),
+    (utils.MaxUInt.UINT8, 128, 122, bytearray([0x80, 0x01, 0x7a])),
+    (utils.MaxUInt.UINT8, 255, 255, bytearray([0xff, 0x01, 0xff])),
+    (utils.MaxUInt.UINT16, 0, 0, bytearray([0x00, 0x02, 0x00, 0x00])),
+    (utils.MaxUInt.UINT16, 128, 122, bytearray([0x80, 0x02, 0x7a, 0x00])),
+    (utils.MaxUInt.UINT16, 255, 65535, bytearray([0xff, 0x02, 0xff, 0xff])),
+    (utils.MaxUInt.UINT32, 0, 0, bytearray([0x00, 0x04, 0x00, 0x00, 0x00, 0x00])),
+    (utils.MaxUInt.UINT32, 128, 122, bytearray([0x80, 0x04, 0x7a, 0x00, 0x00, 0x00])),
+    (utils.MaxUInt.UINT32, 255, 4294967295, bytearray([0xff, 0x04, 0xff, 0xff, 0xff, 0xff]))
 ])
 def test_encode_valid_max_value(max_value, type_, value_, expected):
     packet = tlv.tlv_packet(max_data_value=max_value)
@@ -121,8 +120,8 @@ def test_encode_valid_max_value(max_value, type_, value_, expected):
 
 
 @pytest.mark.parametrize("float_size, type_, value_, expected", [
-    (utils.FloatByteSize.FLOAT32, 0, 3.14, bytearray([0x00, 0x04]) + struct.pack('f', 3.14)),
-    (utils.FloatByteSize.FLOAT64, 0, 3.14, bytearray([0x00, 0x08]) + struct.pack('d', 3.14))
+    (utils.FloatPrecision.FLOAT32, 0, 3.14, bytearray([0x00, 0x04]) + struct.pack('f', 3.14)),
+    (utils.FloatPrecision.FLOAT64, 0, 3.14, bytearray([0x00, 0x08]) + struct.pack('d', 3.14))
 ])
 def test_encode_valid_float_size(float_size, type_, value_, expected):
     packet = tlv.tlv_packet(float_byte_size=float_size)
@@ -174,7 +173,7 @@ def test_encode_invalid_value_type(invalid_value):
 
 # Test Encode - Value Out of Range
 @pytest.mark.parametrize("invalid_value, max_value", [
-    (-1, utils.MaxUintValues.UINT8_MAX), (4294967296, utils.MaxUintValues.UINT32_MAX)
+    (-1, utils.MaxUInt.UINT8), (4294967296, utils.MaxUInt.UINT32)
 ])
 def test_encode_value_out_of_range(invalid_value, max_value):
     """Ensure encode raises ValueError when value_ is out of range."""
@@ -185,9 +184,9 @@ def test_encode_value_out_of_range(invalid_value, max_value):
 
 # Test Decode
 @pytest.mark.parametrize("max_length, min_packet_size", [
-    (utils.MaxUintValues.UINT8_MAX, 2),
-    (utils.MaxUintValues.UINT16_MAX, 3),
-    (utils.MaxUintValues.UINT32_MAX, 5)
+    (utils.MaxUInt.UINT8, 2),
+    (utils.MaxUInt.UINT16, 3),
+    (utils.MaxUInt.UINT32, 5)
 ])
 def test_decode_packet_length_exception(max_length, min_packet_size):
     tlv_ = tlv.tlv_packet(max_data_length=max_length)
@@ -203,13 +202,13 @@ def test_decode_empty_packet():
 
 
 @pytest.mark.parametrize("max_length_enum", [
-    utils.MaxUintValues.UINT8_MAX,
-    utils.MaxUintValues.UINT16_MAX,
-    utils.MaxUintValues.UINT32_MAX,
+    utils.MaxUInt.UINT8,
+    utils.MaxUInt.UINT16,
+    utils.MaxUInt.UINT32,
 ])
 def test_decode_packet_length_mismatch(max_length_enum):
     packet = tlv.tlv_packet(max_data_length=max_length_enum,
-                            max_data_value=utils.MaxUintValues.UINT8_MAX)
+                            max_data_value=utils.MaxUInt.UINT8)
     type_ = 0x01
     value = bytearray([0x10, 0x20])  # actual value is 2 bytes
     declared_len = len(value) + 2    # intentionally incorrect length
@@ -222,12 +221,12 @@ def test_decode_packet_length_mismatch(max_length_enum):
 
 @pytest.mark.parametrize(
     "max_length, max_value",
-    list(product(list(utils.MaxUintValues), list(utils.MaxUintValues)))
+    list(product(list(utils.MaxUInt), list(utils.MaxUInt)))
 )
 def test_decode_value_as_bytearray(max_length, max_value):
     tlv_ = tlv.tlv_packet(max_data_length=max_length, max_data_value=max_value)
     type_ = random.randint(0, 255)
-    value_ = random.randint(0, max_value.value)
+    value_ = random.randint(0, max_value.max_value)
     value_bytes = utils.int_to_bytearray(value_, max_value)
     length_bytes = utils.int_to_bytearray(len(value_bytes), max_length)
     packet = bytearray([type_]) + length_bytes + value_bytes
@@ -241,12 +240,12 @@ def test_decode_value_as_bytearray(max_length, max_value):
 
 @pytest.mark.parametrize(
     "max_length, max_value",
-    list(product(list(utils.MaxUintValues), list(utils.MaxUintValues)))
+    list(product(list(utils.MaxUInt), list(utils.MaxUInt)))
 )
 def test_decode_value_as_int(max_length, max_value):
     tlv_ = tlv.tlv_packet(max_data_length=max_length, max_data_value=max_value)
     type_ = random.randint(0, 255)
-    value_ = random.randint(0, max_value.value)
+    value_ = random.randint(0, max_value.max_value)
     value_bytes = utils.int_to_bytearray(value_, max_value)
     length_bytes = utils.int_to_bytearray(len(value_bytes), max_length)
     packet = bytearray([type_]) + length_bytes + value_bytes
@@ -260,9 +259,9 @@ def test_decode_value_as_int(max_length, max_value):
 
 @pytest.mark.parametrize(
     "max_length, float_size",
-    list(product(list(utils.MaxUintValues), list(utils.FloatByteSize)))
+    list(product(list(utils.MaxUInt), list(utils.FloatPrecision)))
 )
-def test_decode_value_as_float_product(max_length, float_size):
+def test_decode_value_as_float(max_length, float_size):
     tlv_ = tlv.tlv_packet(max_data_length=max_length, float_byte_size=float_size)
 
     type_ = random.randint(0, 255)
@@ -273,7 +272,7 @@ def test_decode_value_as_float_product(max_length, float_size):
 
     decoded = tlv_.decode(packet, return_value_as=tlv.TLVValueReturnType.FLOAT)
     assert decoded[0] == type_
-    assert decoded[1] == float_size.value
+    assert decoded[1] == float_size.num_bytes
     assert isinstance(decoded[2], float)
     assert 3.14 == 3.14
 

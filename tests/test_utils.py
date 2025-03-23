@@ -4,20 +4,27 @@ import struct
 import pytest
 from serial_protocol import utils
 
-# Test Enumerations
-@pytest.mark.parametrize("enum_class, value, expected", [
-    (utils.MaxUintValues, 255, utils.MaxUintValues.UINT8_MAX),
-    (utils.MaxUintValues, 65535, utils.MaxUintValues.UINT16_MAX),
-    (utils.MaxUintValues, 4294967295, utils.MaxUintValues.UINT32_MAX),
-    (utils.FloatByteSize, 4, utils.FloatByteSize.FLOAT32),
-    (utils.FloatByteSize, 8, utils.FloatByteSize.FLOAT64)
+# --- Enum Tests ---
+@pytest.mark.parametrize("enum_class, num_bytes, max_value", [
+    (utils.MaxUInt.UINT8, 1, 255),
+    (utils.MaxUInt.UINT16, 2, 65535),
+    (utils.MaxUInt.UINT32, 4, 4294967295),
 ])
-def test_enum_values(enum_class, value, expected):
-    assert enum_class(value) == expected
-    assert expected.value == value
+def test_maxuint_enum(enum_class, num_bytes, max_value):
+    assert enum_class.num_bytes == num_bytes
+    assert enum_class.max_value == max_value
 
 
-# Test Utility Functions
+@pytest.mark.parametrize("enum_class, num_bytes, format_char", [
+    (utils.FloatPrecision.FLOAT32, 4, 'f'),
+    (utils.FloatPrecision.FLOAT64, 8, 'd'),
+])
+def test_floatprecision_enum(enum_class, num_bytes, format_char):
+    assert enum_class.num_bytes == num_bytes
+    assert enum_class.format_char == format_char
+
+
+# --- Hex/Dec String Conversion ---
 def test_hexstring_to_bytearray():
     data = bytearray([0x00, 0x11, 0x22])
     assert utils.hexstring_to_bytearray("00 11 22") == data
@@ -38,76 +45,74 @@ def test_is_0x_format():
 
 
 def test_bytearray_to_decstring():
-    data1 = bytearray([0, 17, 255])
-    data2 = bytearray([1, 2, 3, 4, 5])
-    assert utils.bytearray_to_decstring(data1) == "000 017 255"
-    assert utils.bytearray_to_decstring(data2) == "001 002 003 004 005"
+    assert utils.bytearray_to_decstring(bytearray([0, 17, 255])) == "000 017 255"
+    assert utils.bytearray_to_decstring(bytearray([1, 2, 3, 4, 5])) == "001 002 003 004 005"
 
 
-# Test Integer to Bytearray Conversion (Valid Cases)
+# --- Integer Conversion ---
 @pytest.mark.parametrize("value, max_value, expected", [
-    (0, utils.MaxUintValues.UINT8_MAX, bytearray([0x00])),
-    (8, utils.MaxUintValues.UINT8_MAX, bytearray([0x08])),
-    (255, utils.MaxUintValues.UINT8_MAX, bytearray([0xFF])),
-    (0, utils.MaxUintValues.UINT16_MAX, bytearray([0x00, 0x00])),
-    (8, utils.MaxUintValues.UINT16_MAX, bytearray([0x08, 0x00])),
-    (65535, utils.MaxUintValues.UINT16_MAX, bytearray([0xFF, 0xFF])),
-    (0, utils.MaxUintValues.UINT32_MAX, bytearray([0x00, 0x00, 0x00, 0x00])),
-    (8, utils.MaxUintValues.UINT32_MAX, bytearray([0x08, 0x00, 0x00, 0x00])),
-    (4294967295, utils.MaxUintValues.UINT32_MAX, bytearray([0xFF, 0xFF, 0xFF, 0xFF]))
+    (0, utils.MaxUInt.UINT8, bytearray([0x00])),
+    (8, utils.MaxUInt.UINT8, bytearray([0x08])),
+    (255, utils.MaxUInt.UINT8, bytearray([0xFF])),
+    (0, utils.MaxUInt.UINT16, bytearray([0x00, 0x00])),
+    (8, utils.MaxUInt.UINT16, bytearray([0x08, 0x00])),
+    (65535, utils.MaxUInt.UINT16, bytearray([0xFF, 0xFF])),
+    (0, utils.MaxUInt.UINT32, bytearray([0x00, 0x00, 0x00, 0x00])),
+    (8, utils.MaxUInt.UINT32, bytearray([0x08, 0x00, 0x00, 0x00])),
+    (4294967295, utils.MaxUInt.UINT32, bytearray([0xFF, 0xFF, 0xFF, 0xFF]))
 ])
 def test_int_to_bytearray(value, max_value, expected):
-    """Ensure integer-to-bytearray conversion works for various max values."""
-    retval = utils.int_to_bytearray(value, max_value)
-    assert len(retval) == len(expected)
-    assert retval == expected
+    assert utils.int_to_bytearray(value, max_value) == expected
 
 
-# Test Invalid Integer Values (Out of Range)
 @pytest.mark.parametrize("value, max_value", [
-    (-1, utils.MaxUintValues.UINT8_MAX),  # Below 0 (negative)
-    (256, utils.MaxUintValues.UINT8_MAX),  # Exceeds UINT8 max
-    (65536, utils.MaxUintValues.UINT16_MAX),  # Exceeds UINT16 max
-    (4294967296, utils.MaxUintValues.UINT32_MAX)  # Exceeds UINT32 max
+    (-1, utils.MaxUInt.UINT8),
+    (256, utils.MaxUInt.UINT8),
+    (65536, utils.MaxUInt.UINT16),
+    (4294967296, utils.MaxUInt.UINT32)
 ])
 def test_int_to_bytearray_invalid(value, max_value):
-    """Ensure invalid integer values raise ValueError."""
     with pytest.raises(ValueError):
         utils.int_to_bytearray(value, max_value)
 
 
-# Test Invalid MaxUintValues (Invalid Enum or Value)
 @pytest.mark.parametrize("value, max_value", [
-    (8, 999999),  # Invalid max value
-    (8, "UINT8_MAX"),  # Wrong type
-    (8, None),  # NoneType
+    (8, 999999),
+    (8, "UINT8"),
+    (8, None)
 ])
 def test_int_to_bytearray_invalid_max_value(value, max_value):
-    """Ensure invalid max_value raises ValueError."""
     with pytest.raises(ValueError):
         utils.int_to_bytearray(value, max_value)
 
 
-# Test Float to Bytearray Conversion (Valid Cases)
-@pytest.mark.parametrize("value, num_bytes, expected", [
-    (3.14, utils.FloatByteSize.FLOAT32, bytearray(struct.pack('f', 3.14))),
-    (3.14, utils.FloatByteSize.FLOAT64, bytearray(struct.pack('d', 3.14))),
-    (-1.5, utils.FloatByteSize.FLOAT32, bytearray(struct.pack('f', -1.5))),
-    (0.0, utils.FloatByteSize.FLOAT64, bytearray(struct.pack('d', 0.0)))
+# --- Float Conversion ---
+@pytest.mark.parametrize("value, precision, expected", [
+    (3.14, utils.FloatPrecision.FLOAT32, bytearray(struct.pack('f', 3.14))),
+    (3.14, utils.FloatPrecision.FLOAT64, bytearray(struct.pack('d', 3.14))),
+    (-1.5, utils.FloatPrecision.FLOAT32, bytearray(struct.pack('f', -1.5))),
+    (0.0, utils.FloatPrecision.FLOAT64, bytearray(struct.pack('d', 0.0)))
 ])
-def test_float_to_bytearray(value, num_bytes, expected):
-    """Ensure float-to-bytearray conversion works for 4 and 8 byte formats."""
-    assert utils.float_to_bytearray(value, num_bytes) == expected
+def test_float_to_bytearray(value, precision, expected):
+    assert utils.float_to_bytearray(value, precision) == expected
 
 
-# Test Invalid Float Byte Sizes
-@pytest.mark.parametrize("value, num_bytes", [
-    (3.14, 2),  # Not 4 or 8
-    (3.14, 16),  # Not 4 or 8
-    (3.14, "FLOAT32"),  # Wrong type
-    (3.14, None),  # NoneType
+@pytest.mark.parametrize("value, precision", [
+    (3.14, 2),
+    (3.14, 16),
+    (3.14, "FLOAT32"),
+    (3.14, None)
 ])
-def test_float_to_bytearray_invalid(value, num_bytes):
-    """Ensure invalid float sizes raise ValueError."""
+def test_float_to_bytearray_invalid(value, precision):
     with pytest.raises(ValueError):
-        utils.float_to_bytearray(value, num_bytes)
+        utils.float_to_bytearray(value, precision)
+
+
+@pytest.mark.parametrize("value, precision", [
+    (bytearray(struct.pack('f', 3.14)), utils.FloatPrecision.FLOAT32),
+    (bytearray(struct.pack('d', 3.14)), utils.FloatPrecision.FLOAT64)
+])
+def test_bytearray_to_float(value, precision):
+    result = utils.bytearray_to_float(value, precision)
+    assert isinstance(result, float)
+    assert abs(result - 3.14) < 1e-6

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import struct
 from enum import Enum
 from typing import Union
 from serial_protocol import utils
@@ -15,9 +14,9 @@ class TLVValueReturnType(Enum):
 class tlv_packet():
 
     def __init__(self,
-                 max_data_length: utils.MaxUintValues = utils.MaxUintValues.UINT8_MAX,
-                 max_data_value: utils.MaxUintValues = utils.MaxUintValues.UINT8_MAX,
-                 float_byte_size: utils.FloatByteSize = utils.FloatByteSize.FLOAT32):
+                 max_data_length: utils.MaxUInt = utils.MaxUInt.UINT8,
+                 max_data_value: utils.MaxUInt = utils.MaxUInt.UINT8,
+                 float_byte_size: utils.FloatPrecision = utils.FloatPrecision.FLOAT32):
 
         # Check and set properties
         self.__max_data_length = self.__max_data_length_setter(max_data_length)
@@ -25,44 +24,44 @@ class tlv_packet():
         self.__float_byte_size = self.__float_byte_size_setter(float_byte_size)
 
     @property
-    def max_data_length(self) -> utils.MaxUintValues:
-        return utils.MaxUintValues(self.__max_data_length)
+    def max_data_length(self) -> utils.MaxUInt:
+        return utils.MaxUInt(self.__max_data_length)
 
     @max_data_length.setter
-    def max_data_length(self, value: utils.MaxUintValues):
+    def max_data_length(self, value: utils.MaxUInt):
         self.__max_data_length = self.__max_data_length_setter(value)
 
-    def __max_data_length_setter(self, value: utils.MaxUintValues):
-        if not isinstance(value, utils.MaxUintValues):
-            if value not in {e.value for e in utils.MaxUintValues}:
+    def __max_data_length_setter(self, value: utils.MaxUInt):
+        if not isinstance(value, utils.MaxUInt):
+            if value not in {e.value for e in utils.MaxUInt}:
                 raise ValueError("Invalid value for max_data_length attribute.")
         return value
 
     @property
-    def max_data_value(self) -> utils.MaxUintValues:
-        return utils.MaxUintValues(self.__max_data_value)
+    def max_data_value(self) -> utils.MaxUInt:
+        return utils.MaxUInt(self.__max_data_value)
 
     @max_data_value.setter
-    def max_data_value(self, value: utils.MaxUintValues):
+    def max_data_value(self, value: utils.MaxUInt):
         self.__max_data_value = self.__max_data_value_setter(value)
 
-    def __max_data_value_setter(self, value: utils.MaxUintValues):
-        if not isinstance(value, utils.MaxUintValues):
-            if value not in {e.value for e in utils.MaxUintValues}:
+    def __max_data_value_setter(self, value: utils.MaxUInt):
+        if not isinstance(value, utils.MaxUInt):
+            if value not in {e.value for e in utils.MaxUInt}:
                 raise ValueError("Invalid value for max_data_value attribute.")
         return value
 
     @property
-    def float_byte_size(self) -> utils.FloatByteSize:
-        return utils.FloatByteSize(self.__float_byte_size)
+    def float_byte_size(self) -> utils.FloatPrecision:
+        return utils.FloatPrecision(self.__float_byte_size)
 
     @float_byte_size.setter
-    def float_byte_size(self, value: utils.FloatByteSize):
+    def float_byte_size(self, value: utils.FloatPrecision):
         self.__float_byte_size = self.__float_byte_size_setter(value)
 
-    def __float_byte_size_setter(self, value: utils.FloatByteSize):
-        if not isinstance(value, utils.FloatByteSize):
-            if value not in {e.value for e in utils.FloatByteSize}:
+    def __float_byte_size_setter(self, value: utils.FloatPrecision):
+        if not isinstance(value, utils.FloatPrecision):
+            if value not in {e.value for e in utils.FloatPrecision}:
                 raise ValueError("Invalid value for float_byte_size attribute.")
         return value
 
@@ -72,8 +71,8 @@ class tlv_packet():
         """
         type_ must be in range [0,255]
         """
-        type_ = self.__validate_and_convert_type(type_)
-        value_ = self.__validate_and_convert_value(value_)
+        type_ = self._validate_and_convert_type(type_)
+        value_ = self._validate_and_convert_value(value_)
         length_ = utils.int_to_bytearray(len(value_), self.max_data_length)
 
         # Assemble and return packet
@@ -98,8 +97,8 @@ class tlv_packet():
         if isinstance(return_value_as, TLVValueReturnType) == False:
             raise TypeError("The return_value_as must be of type TLVValueReturnType.")
 
-        num_len_bytes = utils.number_of_bytes_from_max_value(self.max_data_length)
-        if len(packet) < 1 + num_len_bytes:
+        num_len_bytes = self.max_data_length.num_bytes
+        if len(packet) < 1 + self.max_data_length.num_bytes:
             raise ValueError(f"Packet is too short to contain a valid TLV header (got {len(packet)} bytes).")
 
         # Parse type and length
@@ -119,20 +118,19 @@ class tlv_packet():
         if return_value_as == TLVValueReturnType.BYTEARRAY:
             value_ = value_bytes
         elif return_value_as == TLVValueReturnType.INT:
-            value_ = int.from_bytes(value_bytes, byteorder='little')
+            value_ = utils.bytearray_to_int(value_bytes)
         elif return_value_as == TLVValueReturnType.FLOAT:
-            if self.float_byte_size.value != len(value_bytes):
+            if self.float_byte_size.num_bytes != len(value_bytes):
                 raise ValueError(
                     "Float value length mismatch:"
-                    f"expected {self.float_byte_size.value} bytes,"
-                    f"got {len(value_bytes)}."
+                    f" expected {self.float_byte_size.value} bytes,"
+                    f" got {len(value_bytes)}."
                 )
-            format_char = 'f' if self.float_byte_size == utils.FloatByteSize.FLOAT32 else 'd'
-            value_ = struct.unpack(format_char, value_bytes)[0]
+            value_ = utils.bytearray_to_float(value_bytes, self.float_byte_size)
 
         return type_, length_, value_
 
-    def __validate_and_convert_type(self,
+    def _validate_and_convert_type(self,
                                     type_: Union[int, bytearray]
                                     ) -> bytearray:
         """Validate and convert type_ to a bytearray (1-byte identifier)."""
@@ -146,7 +144,7 @@ class tlv_packet():
             type_ = bytearray([type_])
         return type_
 
-    def __validate_and_convert_value(self,
+    def _validate_and_convert_value(self,
                                      value_: Union[int, float, bytearray]
                                      ) -> bytearray:
         """Convert value_ to the appropriate byte representation."""

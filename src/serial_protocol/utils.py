@@ -4,201 +4,279 @@ from enum import Enum
 import struct
 
 
-class MaxUintValues(Enum):
-    UINT8_MAX = 255
-    UINT16_MAX = 65535
-    UINT32_MAX = 4294967295
+########################
+# --- ENUM HELPERS --- #
+########################
 
-
-class FloatByteSize(Enum):
-    FLOAT32 = 4  # IEEE 754 single-precision
-    FLOAT64 = 8  # IEEE 754 double-precision
-
-
-def bytearray_to_hexstring(data: bytearray, use_0x_format: bool = True) -> str:
+class MaxUInt(Enum):
     """
-    Converts a bytearray to a space-separated hex string representation.
+    Enumeration of maximum unsigned integer values with associated byte sizes.
 
-    Args:
-        data (bytearray): The input byte sequence.
-        use_0x_format (bool, optional): If True, prefixes each byte with '0x'.
-                                        Defaults to True.
+    Members:
+        UINT8:  8-bit unsigned integer (1 byte, max 255)
+        UINT16: 16-bit unsigned integer (2 bytes, max 65535)
+        UINT32: 32-bit unsigned integer (4 bytes, max 4294967295)
 
-    Returns:
-        str: A space-separated string of hexadecimal values.
+    Properties:
+        num_bytes (int): Number of bytes required to represent the value.
+        max_value (int): Maximum value for the unsigned integer type.
 
     Example:
-        >>> bytearray_to_hexstring(bytearray([0, 17, 34]), use_0x_format=True)
-        '0x00 0x11 0x22'
-        >>> bytearray_to_hexstring(bytearray([0, 17, 34]), use_0x_format=False)
-        '00 11 22'
+        >>> MaxUInt.UINT16.num_bytes
+        2
+        >>> MaxUInt.UINT16.max_value
+        65535
     """
-    fmt = "0x{:02x}" if use_0x_format else "{:02x}"
-    return " ".join(fmt.format(x) for x in data)
+    UINT8 = (1, 255)
+    UINT16 = (2, 65535)
+    UINT32 = (4, 4294967295)
+
+    @property
+    def num_bytes(self) -> int:
+        return self.value[0]
+
+    @property
+    def max_value(self) -> int:
+        return self.value[1]
 
 
-def hexstring_to_bytearray(hexstr: str) -> bytearray:
+class FloatPrecision(Enum):
     """
-    Converts a space-separated hex string into a bytearray.
+    Enumeration of IEEE 754 floating point precisions with byte size and format.
 
-    Detects whether the input uses '0x' prefixes or plain hex values and 
-    converts accordingly. Raises an error if mixed formats are detected.
+    Members:
+        FLOAT32: 32-bit (4-byte) single-precision float ('f' format character)
+        FLOAT64: 64-bit (8-byte) double-precision float ('d' format character)
+
+    Properties:
+        num_bytes (int): Number of bytes used to represent the float.
+        format_char (str): Format character used for struct packing/unpacking.
+
+    Example:
+        >>> FloatPrecision.FLOAT64.num_bytes
+        8
+        >>> FloatPrecision.FLOAT64.format_char
+        'd'
+    """
+    FLOAT32 = (4, 'f')  # IEEE 754 single-precision
+    FLOAT64 = (8, 'd')  # IEEE 754 double-precision
+
+    @property
+    def num_bytes(self) -> int:
+        return self.value[0]
+
+    @property
+    def format_char(self):
+        return self.value[1]
+
+
+def coerce_enum(value, enum_class):
+    """
+    Ensures that a given value is an instance of the provided Enum class.
 
     Args:
-        hexstr (str): A space-separated string of hexadecimal values.
+        value: The value to check or convert.
+        enum_class (Enum): The target Enum class.
 
     Returns:
-        bytearray: The corresponding byte sequence.
+        Enum: An instance of the Enum class.
 
     Raises:
-        ValueError: If the string contains a mix of '0x' prefixed and plain hex formats.
-
-    Example:
-        >>> hexstring_to_bytearray("0x00 0x11 0xff")
-        bytearray(b'\\x00\\x11\\xff')
-        >>> hexstring_to_bytearray("00 11 ff")
-        bytearray(b'\\x00\\x11\\xff')
-        >>> hexstring_to_bytearray("00 0x11 ff")
-        ValueError: The hex string contains mixed '0x' and plain hex formats.
+        ValueError: If value cannot be converted to the Enum.
     """
-    hexstr = hexstr.strip()
-
-    if is_0x_format(hexstr):
-        byte_values = [int(token, 16) for token in hexstr.split()]
-    else:
-        byte_values = bytearray.fromhex(hexstr)
-
-    return bytearray(byte_values)
+    if isinstance(value, enum_class):
+        return value
+    try:
+        return enum_class(value)
+    except ValueError:
+        raise ValueError(f"Invalid value for {enum_class.__name__}.")
 
 
-def is_0x_format(hexstr: str) -> bool:
+##########################
+# --- FORMAT HELPERS --- #
+##########################
+
+def is_0x_format(hex_string: str) -> bool:
     """
     Determines whether a given hex string uses the '0x' prefix format.
 
-    Ensures that the entire string follows a consistent format, either all
-    '0x' prefixed or all plain hex. Raises an error if mixed formats are found.
-
     Args:
-        hexstr (str): A space-separated string of hexadecimal values.
+        hex_string (str): A space-separated string of hexadecimal values.
 
     Returns:
         bool: True if all tokens use the '0x' prefix, False if all are plain hex.
 
     Raises:
-        ValueError: If the string contains a mix of '0x' prefixed and plain hex formats.
+        ValueError: If the string contains a mix of formats.
 
     Example:
-        >>> is_0x_format("0x00 0x11 0xff")
+        >>> is_0x_format("0x01 0x02 0x03")
         True
-        >>> is_0x_format("00 11 ff")
+        >>> is_0x_format("01 02 03")
         False
-        >>> is_0x_format("00 0x11 ff")
-        ValueError: The hex string contains mixed '0x' and plain hex formats.
+        >>> is_0x_format("0x01 02")
+        ValueError
     """
-    tokens = hexstr.split()
-    if all(token.startswith("0x") for token in tokens):
+    tokens = hex_string.split()
+    has_0x = [token.startswith("0x") for token in tokens]
+    if all(has_0x):
         return True
-    if any(token.startswith("0x") for token in tokens):
+    if any(has_0x):
         raise ValueError("The hex string contains mixed '0x' and plain hex formats.")
     return False
 
 
-def bytearray_to_decstring(data: bytearray) -> str:
-    """
-    Converts a bytearray to a space-separated decimal string representation.
+##############################
+# --- CONVERSION HELPERS --- #
+##############################
 
-    Each byte value is represented as a three-digit decimal number (zero-padded).
+def bytearray_to_hexstring(data: bytearray, use_0x_format: bool = True) -> str:
+    """
+    Converts a bytearray to a space-separated hex string.
 
     Args:
-        data (bytearray): The input byte sequence.
+        data (bytearray): The bytearray to convert.
+        use_0x_format (bool): Whether to include '0x' prefix. Default is True.
 
     Returns:
-        str: A space-separated string of decimal values.
+        str: A space-separated hex string.
 
     Example:
-        >>> bytearray_to_decstring(bytearray([0, 17, 255]))
-        '000 017 255'
+        >>> bytearray_to_hexstring(bytearray([0, 15, 255]))
+        '0x00 0x0f 0xff'
+        >>> bytearray_to_hexstring(bytearray([0, 15, 255]), use_0x_format=False)
+        '00 0f ff'
+    """
+    fmt = "0x{:02x}" if use_0x_format else "{:02x}"
+    return " ".join(fmt.format(x) for x in data)
+
+
+def hexstring_to_bytearray(hex_string: str) -> bytearray:
+    """
+    Converts a space-separated hex string into a bytearray.
+
+    Args:
+        hex_string (str): The hex string to convert.
+
+    Returns:
+        bytearray: The resulting bytearray.
+
+    Raises:
+        ValueError: If mixed '0x' and plain hex formats are used.
+
+    Example:
+        >>> hexstring_to_bytearray("0x00 0x0f 0xff")
+        bytearray(b'\x00\x0f\xff')
+        >>> hexstring_to_bytearray("00 0f ff")
+        bytearray(b'\x00\x0f\xff')
+    """
+    hex_string = hex_string.strip()
+    if is_0x_format(hex_string):
+        return bytearray(int(token, 16) for token in hex_string.split())
+    return bytearray.fromhex(hex_string)
+
+
+def bytearray_to_decstring(data: bytearray) -> str:
+    """
+    Converts a bytearray to a space-separated decimal string.
+
+    Args:
+        data (bytearray): The bytearray to convert.
+
+    Returns:
+        str: A string of zero-padded 3-digit decimal numbers.
+
+    Example:
+        >>> bytearray_to_decstring(bytearray([1, 15, 255]))
+        '001 015 255'
     """
     return " ".join("{:03d}".format(x) for x in data)
 
 
-def number_of_bytes_from_max_value(max_value: MaxUintValues) -> int:
-    # Ensure max value is of MaxUintValues type and if not
-    # make sure it is a valid value of one of the MaxUintValues before
-    # converting it to the MaxUintValues enum type
-    if not isinstance(max_value, MaxUintValues):
-        if max_value not in {e.value for e in MaxUintValues}:
-            raise ValueError("Invalid value for max_data_length attribute.")
-        max_value = MaxUintValues(max_value)
-
-    # Determine byte size needed (default to single byte, max 255 value)
-    num_bytes = 1
-    if max_value == MaxUintValues.UINT16_MAX:
-        num_bytes = 2
-    elif max_value == MaxUintValues.UINT32_MAX:
-        num_bytes = 4
-    return num_bytes
-
-
-def int_to_bytearray(value: int, max_value: MaxUintValues) -> bytearray:
-    """Convert an integer to a bytearray of appropriate length based on max value.
+def int_to_bytearray(value: int, max_uint: MaxUInt, byteorder: str = "little") -> bytearray:
+    """
+    Converts an integer into a bytearray based on the MaxUInt limit.
 
     Args:
-        value (int): The integer value to encode.
-        max_value (MaxUintValues): The max value determining byte size.
+        value (int): The integer value to convert.
+        max_uint (MaxUInt): The maximum uint type.
+        byteorder (str): Byte order ('little' or 'big'). Default is 'little'.
 
     Returns:
-        bytearray: The encoded integer as bytes.
+        bytearray: The resulting bytearray.
 
     Raises:
-        ValueError: If max_value is not a valid MaxUintValues.
-        ValueError: If value is out of range.
+        ValueError: If value is out of bounds.
+
+    Example:
+        >>> int_to_bytearray(1025, MaxUInt.UINT16)
+        bytearray(b'\x01\x04')
     """
-    # Ensure max value is of MaxUintValues type and if not
-    # make sure it is a valid value of one of the MaxUintValues before
-    # converting it to the MaxUintValues enum type
-    if not isinstance(max_value, MaxUintValues):
-        if max_value not in {e.value for e in MaxUintValues}:
-            raise ValueError("Invalid value for max_data_length attribute.")
-        max_value = MaxUintValues(max_value)
-
-    # Determine byte size needed (default to single byte, max 255 value)
-    num_bytes = number_of_bytes_from_max_value(max_value)
-
-    # Determine actual max value and ensure value is in range
-    max_value = (2**(num_bytes*8)) - 1
-    if not (0 <= value <= max_value):
-        raise ValueError(f"value must be in range [0, {max_value}].")
-
-    # Convert integer to bytearray (Little Endian)
-    return bytearray(value.to_bytes(num_bytes, byteorder="little"))
+    max_uint = coerce_enum(value=max_uint, enum_class=MaxUInt)
+    if not (0 <= value <= max_uint.max_value):
+        raise ValueError(f"Value must be in range [0, {max_uint.max_value}].")
+    return bytearray(value.to_bytes(max_uint.num_bytes, byteorder=byteorder))
 
 
-def float_to_bytearray(value: float, num_bytes: FloatByteSize) -> bytearray:
-    """Convert a float to a 4-byte or 8-byte bytearray using IEEE 754 format.
+def bytearray_to_int(value: bytearray, byteorder: str = "little") -> int:
+    """
+    Converts a bytearray to an integer.
 
     Args:
-        value (float): The float to encode.
-        num_bytes (FloatByteSize): The number of bytes (4 or 8).
+        value (bytearray): The input bytearray.
+        byteorder (str): Byte order ('little' or 'big'). Default is 'little'.
 
     Returns:
-        bytearray: The encoded float as bytes.
+        int: The resulting integer.
 
-    Raises:
-        ValueError: If num_bytes is not a valid FloatByteSize.
+    Example:
+        >>> bytearray_to_int(bytearray([1, 4]))
+        1025
     """
-    # Ensure max value is of FloatByteSize type and if not
-    # make sure it is a valid value of one of the FloatByteSize before
-    # converting it to the FloatByteSize enum type
-    if not isinstance(num_bytes, FloatByteSize):
-        if num_bytes not in {e.value for e in FloatByteSize}:
-            raise ValueError("Invalid value for float_byte_size attribute.")
-        num_bytes = FloatByteSize(num_bytes)
+    if not isinstance(value, bytearray):
+        raise TypeError("Input value must be of type bytearray.")
+    return int.from_bytes(value, byteorder=byteorder)
 
-    # Determine format char
-    format_char = "f"
-    if num_bytes == FloatByteSize.FLOAT64:
-        format_char = "d"
 
-    # Convert float to bytearray (Little Endian)
-    return bytearray(struct.pack(format_char, value))
+def float_to_bytearray(value: float, precision: FloatPrecision, byteorder: str = "little") -> bytearray:
+    """
+    Converts a float to a bytearray using IEEE 754 format.
+
+    Args:
+        value (float): The float to convert.
+        precision (FloatPrecision): Desired float precision.
+        byteorder (str): Byte order ('little' or 'big'). Default is 'little'.
+
+    Returns:
+        bytearray: The resulting bytearray.
+
+    Example:
+        >>> float_to_bytearray(3.14, FloatPrecision.FLOAT32)
+        bytearray(b'\xc3\xf5H@')
+    """
+    precision = coerce_enum(value=precision, enum_class=FloatPrecision)
+    packed = struct.pack(precision.format_char, value)
+    return bytearray(packed if byteorder == "little" else packed[::-1])
+
+
+def bytearray_to_float(value: bytearray, precision: FloatPrecision, byteorder: str = "little") -> float:
+    """
+    Converts a bytearray to a float using IEEE 754 format.
+
+    Args:
+        value (bytearray): The bytearray to convert.
+        precision (FloatPrecision): Desired float precision.
+        byteorder (str): Byte order ('little' or 'big'). Default is 'little'.
+
+    Returns:
+        float: The resulting float.
+
+    Example:
+        >>> bytearray_to_float(bytearray(b'\xc3\xf5H@'), FloatPrecision.FLOAT32)
+        3.14
+    """
+    if not isinstance(value, bytearray):
+        raise TypeError("Input value must be of type bytearray.")
+    precision = coerce_enum(value=precision, enum_class=FloatPrecision)
+    byte_seq = bytes(value if byteorder == "little" else value[::-1])
+    return struct.unpack(precision.format_char, byte_seq)[0]

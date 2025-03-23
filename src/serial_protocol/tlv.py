@@ -1,7 +1,15 @@
 #!/usr/bin/env python3
 
+import struct
+from enum import Enum
 from typing import Union
 from serial_protocol import utils
+
+
+class TLVValueReturnType(Enum):
+    BYTEARRAY = "bytearray"
+    INT = "int"
+    FLOAT = "float"
 
 
 class tlv_packet():
@@ -61,13 +69,68 @@ class tlv_packet():
     def encode(self,
                type_: Union[int, bytearray],
                value_: Union[int, float, bytearray]):
-        
+        """
+        type_ must be in range [0,255]
+        """
         type_ = self.__validate_and_convert_type(type_)
         value_ = self.__validate_and_convert_value(value_)
         length_ = utils.int_to_bytearray(len(value_), self.max_data_length)
 
         # Assemble and return packet
         return bytearray(type_ + length_ + value_)
+
+    def decode(self, packet: bytearray, 
+               return_value_as: TLVValueReturnType = TLVValueReturnType.BYTEARRAY) -> tuple:
+        """Decode a TLV packet and return value as bytearray, int, or float.
+
+        Args:
+            packet (bytearray): The encoded TLV packet.
+            return_value_as (str): One of "bytearray", "int", or "float".
+
+        Returns:
+            tuple: (type: int, length: int, value: Union[int, float, bytearray])
+
+        Raises:
+            ValueError: If packet is malformed or if value format doesn't match length.
+        """
+        if isinstance(packet, bytearray) == False:
+            raise TypeError("The packet must be of type bytearray.")
+        if isinstance(return_value_as, TLVValueReturnType) == False:
+            raise TypeError("The return_value_as must be of type TLVValueReturnType.")
+
+        num_len_bytes = utils.number_of_bytes_from_max_value(self.max_data_length)
+        if len(packet) < 1 + num_len_bytes:
+            raise ValueError(f"Packet is too short to contain a valid TLV header (got {len(packet)} bytes).")
+
+        # Parse type and length
+        type_ = int(packet[0])
+        length_ = int.from_bytes(packet[1:num_len_bytes+1], byteorder='little')
+        expected_total_len = 1 + num_len_bytes + length_
+        if len(packet) != expected_total_len:
+            raise ValueError(
+                f"Packet length mismatch: expected {expected_total_len}"
+                f" bytes, got {len(packet)} bytes."
+            )
+
+        # Extract value field
+        value_bytes = packet[num_len_bytes+1:expected_total_len]
+
+        # Decode value
+        if return_value_as == TLVValueReturnType.BYTEARRAY:
+            value_ = value_bytes
+        elif return_value_as == TLVValueReturnType.INT:
+            value_ = int.from_bytes(value_bytes, byteorder='little')
+        elif return_value_as == TLVValueReturnType.FLOAT:
+            if self.float_byte_size.value != len(value_bytes):
+                raise ValueError(
+                    "Float value length mismatch:"
+                    f"expected {self.float_byte_size.value} bytes,"
+                    f"got {len(value_bytes)}."
+                )
+            format_char = 'f' if self.float_byte_size == utils.FloatByteSize.FLOAT32 else 'd'
+            value_ = struct.unpack(format_char, value_bytes)[0]
+
+        return type_, length_, value_
 
     def __validate_and_convert_type(self,
                                     type_: Union[int, bytearray]

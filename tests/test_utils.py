@@ -46,16 +46,21 @@ def test_bytearray_to_decstring():
 
 # Test Integer to Bytearray Conversion (Valid Cases)
 @pytest.mark.parametrize("value, max_value, expected", [
+    (0, utils.MaxUintValues.UINT8_MAX, bytearray([0x00])),
     (8, utils.MaxUintValues.UINT8_MAX, bytearray([0x08])),
     (255, utils.MaxUintValues.UINT8_MAX, bytearray([0xFF])),
+    (0, utils.MaxUintValues.UINT16_MAX, bytearray([0x00, 0x00])),
     (8, utils.MaxUintValues.UINT16_MAX, bytearray([0x08, 0x00])),
     (65535, utils.MaxUintValues.UINT16_MAX, bytearray([0xFF, 0xFF])),
+    (0, utils.MaxUintValues.UINT32_MAX, bytearray([0x00, 0x00, 0x00, 0x00])),
     (8, utils.MaxUintValues.UINT32_MAX, bytearray([0x08, 0x00, 0x00, 0x00])),
     (4294967295, utils.MaxUintValues.UINT32_MAX, bytearray([0xFF, 0xFF, 0xFF, 0xFF]))
 ])
 def test_int_to_bytearray(value, max_value, expected):
     """Ensure integer-to-bytearray conversion works for various max values."""
-    assert utils.int_to_bytearray(value, max_value) == expected
+    retval = utils.int_to_bytearray(value, max_value)
+    assert len(retval) == len(expected)
+    assert retval == expected
 
 
 # Test Invalid Integer Values (Out of Range)

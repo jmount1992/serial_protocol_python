@@ -2,6 +2,8 @@
 
 import pytest
 import struct
+import random
+from itertools import product
 from serial_protocol import tlv, utils
 
 
@@ -83,46 +85,52 @@ def test_tlv_packet_setters_invalid(attr, invalid_value):
         setattr(packet, attr, invalid_value)
 
 
-# 🟢 Test Encode - Valid Cases
-@pytest.mark.parametrize("type_, value_, float_size, max_value, max_length, expected", [
-    # Integer Type, Integer Value
-    (5, 100, utils.FloatByteSize.FLOAT32, utils.MaxUintValues.UINT8_MAX, utils.MaxUintValues.UINT8_MAX,
-     bytearray([5, 1, 100])),
-    (255, 255, utils.FloatByteSize.FLOAT32, utils.MaxUintValues.UINT8_MAX, utils.MaxUintValues.UINT8_MAX,
-     bytearray([255, 1, 255])),
-
-    # Integer Type, Float Value (4-byte IEEE 754)
-    (10, 3.14, utils.FloatByteSize.FLOAT32, utils.MaxUintValues.UINT8_MAX, utils.MaxUintValues.UINT8_MAX,
-     bytearray([10, 4]) + struct.pack("f", 3.14)),
-
-    # Integer Type, Float Value (8-byte IEEE 754)
-    (20, 3.14, utils.FloatByteSize.FLOAT64, utils.MaxUintValues.UINT8_MAX, utils.MaxUintValues.UINT8_MAX,
-     bytearray([20, 8]) + struct.pack("d", 3.14)),
-
-    # Integer Type, Bytearray Value
-    (42, bytearray([0x01, 0x02, 0x03]), utils.FloatByteSize.FLOAT32, utils.MaxUintValues.UINT8_MAX,
-     utils.MaxUintValues.UINT8_MAX, bytearray([42, 3, 1, 2, 3])),
-
-    # Bytearray Type, Integer Value
-    (bytearray([99]), 50, utils.FloatByteSize.FLOAT32, utils.MaxUintValues.UINT8_MAX, utils.MaxUintValues.UINT8_MAX,
-     bytearray([99, 1, 50])),
-
-    # Bytearray Type, Float Value
-    (bytearray([1]), 2.71, utils.FloatByteSize.FLOAT32, utils.MaxUintValues.UINT8_MAX, utils.MaxUintValues.UINT8_MAX,
-     bytearray([1, 4]) + struct.pack("f", 2.71)),
-
-    # Bytearray Type, Bytearray Value
-    (bytearray([100]), bytearray([0xFF, 0x00]), utils.FloatByteSize.FLOAT32, utils.MaxUintValues.UINT8_MAX,
-     utils.MaxUintValues.UINT8_MAX, bytearray([100, 2, 0xFF, 0x00])),
+# Test Encode - Valid Cases
+@pytest.mark.parametrize("max_length, type_, value_, expected", [
+    (utils.MaxUintValues.UINT8_MAX, 0, 0, bytearray([0x00, 0x01, 0x00])),
+    (utils.MaxUintValues.UINT8_MAX, 128, 122, bytearray([0x80, 0x01, 0x7a])),
+    (utils.MaxUintValues.UINT8_MAX, 255, 255, bytearray([0xff, 0x01, 0xff])),
+    (utils.MaxUintValues.UINT16_MAX, 0, 0, bytearray([0x00, 0x01, 0x00, 0x00])),
+    (utils.MaxUintValues.UINT16_MAX, 128, 122, bytearray([0x80, 0x01, 0x00, 0x7a])),
+    (utils.MaxUintValues.UINT16_MAX, 255, 255, bytearray([0xff, 0x01, 0x00, 0xff])),
+    (utils.MaxUintValues.UINT32_MAX, 0, 0, bytearray([0x00, 0x01, 0x00, 0x00, 0x00, 0x00])),
+    (utils.MaxUintValues.UINT32_MAX, 128, 122, bytearray([0x80, 0x01, 0x00, 0x00, 0x00, 0x7a])),
+    (utils.MaxUintValues.UINT32_MAX, 255, 255, bytearray([0xff, 0x01, 0x00, 0x00, 0x00, 0xff]))
 ])
-def test_encode_valid(type_, value_, float_size, max_value, max_length, expected):
-    """Ensure encode correctly formats TLV packets with valid inputs."""
-    packet = tlv.tlv_packet(float_byte_size=float_size, max_data_value=max_value, max_data_length=max_length)
+def test_encode_valid_max_length(max_length, type_, value_, expected):
+    packet = tlv.tlv_packet(max_data_length=max_length)
     result = packet.encode(type_, value_)
     assert result == expected
 
 
-# 🔴 Test Encode - Invalid Type (Not int or bytearray)
+@pytest.mark.parametrize("max_value, type_, value_, expected", [
+    (utils.MaxUintValues.UINT8_MAX, 0, 0, bytearray([0x00, 0x01, 0x00])),
+    (utils.MaxUintValues.UINT8_MAX, 128, 122, bytearray([0x80, 0x01, 0x7a])),
+    (utils.MaxUintValues.UINT8_MAX, 255, 255, bytearray([0xff, 0x01, 0xff])),
+    (utils.MaxUintValues.UINT16_MAX, 0, 0, bytearray([0x00, 0x02, 0x00, 0x00])),
+    (utils.MaxUintValues.UINT16_MAX, 128, 122, bytearray([0x80, 0x02, 0x7a, 0x00])),
+    (utils.MaxUintValues.UINT16_MAX, 255, 65535, bytearray([0xff, 0x02, 0xff, 0xff])),
+    (utils.MaxUintValues.UINT32_MAX, 0, 0, bytearray([0x00, 0x04, 0x00, 0x00, 0x00, 0x00])),
+    (utils.MaxUintValues.UINT32_MAX, 128, 122, bytearray([0x80, 0x04, 0x7a, 0x00, 0x00, 0x00])),
+    (utils.MaxUintValues.UINT32_MAX, 255, 4294967295, bytearray([0xff, 0x04, 0xff, 0xff, 0xff, 0xff]))
+])
+def test_encode_valid_max_value(max_value, type_, value_, expected):
+    packet = tlv.tlv_packet(max_data_value=max_value)
+    result = packet.encode(type_, value_)
+    assert result == expected
+
+
+@pytest.mark.parametrize("float_size, type_, value_, expected", [
+    (utils.FloatByteSize.FLOAT32, 0, 3.14, bytearray([0x00, 0x04]) + struct.pack('f', 3.14)),
+    (utils.FloatByteSize.FLOAT64, 0, 3.14, bytearray([0x00, 0x08]) + struct.pack('d', 3.14))
+])
+def test_encode_valid_float_size(float_size, type_, value_, expected):
+    packet = tlv.tlv_packet(float_byte_size=float_size)
+    result = packet.encode(type_, value_)
+    assert result == expected
+
+
+# Test Encode - Invalid Type (Not int or bytearray)
 @pytest.mark.parametrize("invalid_type", [
     None, "string", 3.14, [10], (1,)
 ])
@@ -133,7 +141,7 @@ def test_encode_invalid_type(invalid_type):
         packet.encode(invalid_type, 10)
 
 
-# 🔴 Test Encode - Invalid Type Bytearray (Must be 1 byte)
+# Test Encode - Invalid Type Bytearray (Must be 1 byte)
 @pytest.mark.parametrize("invalid_bytearray", [
     bytearray([]), bytearray([1, 2]), bytearray([0, 1, 2, 3]),
 ])
@@ -144,7 +152,7 @@ def test_encode_invalid_bytearray_type(invalid_bytearray):
         packet.encode(invalid_bytearray, 10)
 
 
-# 🔴 Test Encode - Invalid Type Integer (Out of Range)
+# Test Encode - Invalid Type Integer (Out of Range)
 @pytest.mark.parametrize("invalid_type", [-1, 256])
 def test_encode_invalid_int_type(invalid_type):
     """Ensure encode raises ValueError for out-of-range integer type_."""
@@ -153,7 +161,7 @@ def test_encode_invalid_int_type(invalid_type):
         packet.encode(invalid_type, 10)
 
 
-# 🔴 Test Encode - Invalid Value Type
+# Test Encode - Invalid Value Type
 @pytest.mark.parametrize("invalid_value", [
     None, "string", [1, 2, 3], (1, 2, 3), {"key": "value"},
 ])
@@ -164,7 +172,7 @@ def test_encode_invalid_value_type(invalid_value):
         packet.encode(1, invalid_value)
 
 
-# 🔴 Test Encode - Value Out of Range
+# Test Encode - Value Out of Range
 @pytest.mark.parametrize("invalid_value, max_value", [
     (-1, utils.MaxUintValues.UINT8_MAX), (4294967296, utils.MaxUintValues.UINT32_MAX)
 ])
@@ -173,3 +181,99 @@ def test_encode_value_out_of_range(invalid_value, max_value):
     packet = tlv.tlv_packet(max_data_value=max_value)
     with pytest.raises(ValueError):
         packet.encode(1, invalid_value)
+
+
+# Test Decode
+@pytest.mark.parametrize("max_length, min_packet_size", [
+    (utils.MaxUintValues.UINT8_MAX, 2),
+    (utils.MaxUintValues.UINT16_MAX, 3),
+    (utils.MaxUintValues.UINT32_MAX, 5)
+])
+def test_decode_packet_length_exception(max_length, min_packet_size):
+    tlv_ = tlv.tlv_packet(max_data_length=max_length)
+    with pytest.raises(ValueError):
+        tlv_.decode(bytearray([0x00]*(min_packet_size-1)))
+    tlv_.decode(bytearray([0x00]*(min_packet_size)))
+
+
+def test_decode_empty_packet():
+    packet = tlv.tlv_packet()
+    with pytest.raises(ValueError):
+        packet.decode(bytearray([]))
+
+
+@pytest.mark.parametrize("max_length_enum", [
+    utils.MaxUintValues.UINT8_MAX,
+    utils.MaxUintValues.UINT16_MAX,
+    utils.MaxUintValues.UINT32_MAX,
+])
+def test_decode_packet_length_mismatch(max_length_enum):
+    packet = tlv.tlv_packet(max_data_length=max_length_enum,
+                            max_data_value=utils.MaxUintValues.UINT8_MAX)
+    type_ = 0x01
+    value = bytearray([0x10, 0x20])  # actual value is 2 bytes
+    declared_len = len(value) + 2    # intentionally incorrect length
+    length_field = utils.int_to_bytearray(declared_len, max_length_enum)
+    corrupted_packet = bytearray([type_]) + length_field + value  # too short for declared length
+
+    with pytest.raises(ValueError):
+        packet.decode(corrupted_packet)
+
+
+@pytest.mark.parametrize(
+    "max_length, max_value",
+    list(product(list(utils.MaxUintValues), list(utils.MaxUintValues)))
+)
+def test_decode_value_as_bytearray(max_length, max_value):
+    tlv_ = tlv.tlv_packet(max_data_length=max_length, max_data_value=max_value)
+    type_ = random.randint(0, 255)
+    value_ = random.randint(0, max_value.value)
+    value_bytes = utils.int_to_bytearray(value_, max_value)
+    length_bytes = utils.int_to_bytearray(len(value_bytes), max_length)
+    packet = bytearray([type_]) + length_bytes + value_bytes
+
+    decoded = tlv_.decode(packet, return_value_as=tlv.TLVValueReturnType.BYTEARRAY)
+    assert decoded[0] == type_
+    assert decoded[1] == len(value_bytes)
+    assert isinstance(decoded[2], bytearray)
+    assert decoded[2] == value_bytes
+
+
+@pytest.mark.parametrize(
+    "max_length, max_value",
+    list(product(list(utils.MaxUintValues), list(utils.MaxUintValues)))
+)
+def test_decode_value_as_int(max_length, max_value):
+    tlv_ = tlv.tlv_packet(max_data_length=max_length, max_data_value=max_value)
+    type_ = random.randint(0, 255)
+    value_ = random.randint(0, max_value.value)
+    value_bytes = utils.int_to_bytearray(value_, max_value)
+    length_bytes = utils.int_to_bytearray(len(value_bytes), max_length)
+    packet = bytearray([type_]) + length_bytes + value_bytes
+
+    decoded = tlv_.decode(packet, return_value_as=tlv.TLVValueReturnType.INT)
+    assert decoded[0] == type_
+    assert decoded[1] == len(value_bytes)
+    assert isinstance(decoded[2], int)
+    assert decoded[2] == value_
+
+
+@pytest.mark.parametrize(
+    "max_length, float_size",
+    list(product(list(utils.MaxUintValues), list(utils.FloatByteSize)))
+)
+def test_decode_value_as_float_product(max_length, float_size):
+    tlv_ = tlv.tlv_packet(max_data_length=max_length, float_byte_size=float_size)
+
+    type_ = random.randint(0, 255)
+    float_val = 3.14
+    value_bytes = utils.float_to_bytearray(float_val, float_size)
+    length_bytes = utils.int_to_bytearray(len(value_bytes), max_length)
+    packet = bytearray([type_]) + length_bytes + value_bytes
+
+    decoded = tlv_.decode(packet, return_value_as=tlv.TLVValueReturnType.FLOAT)
+    assert decoded[0] == type_
+    assert decoded[1] == float_size.value
+    assert isinstance(decoded[2], float)
+    assert 3.14 == 3.14
+

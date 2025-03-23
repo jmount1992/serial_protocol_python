@@ -122,6 +122,24 @@ def bytearray_to_decstring(data: bytearray) -> str:
     return " ".join("{:03d}".format(x) for x in data)
 
 
+def number_of_bytes_from_max_value(max_value: MaxUintValues) -> int:
+    # Ensure max value is of MaxUintValues type and if not
+    # make sure it is a valid value of one of the MaxUintValues before
+    # converting it to the MaxUintValues enum type
+    if not isinstance(max_value, MaxUintValues):
+        if max_value not in {e.value for e in MaxUintValues}:
+            raise ValueError("Invalid value for max_data_length attribute.")
+        max_value = MaxUintValues(max_value)
+
+    # Determine byte size needed (default to single byte, max 255 value)
+    num_bytes = 1
+    if max_value == MaxUintValues.UINT16_MAX:
+        num_bytes = 2
+    elif max_value == MaxUintValues.UINT32_MAX:
+        num_bytes = 4
+    return num_bytes
+
+
 def int_to_bytearray(value: int, max_value: MaxUintValues) -> bytearray:
     """Convert an integer to a bytearray of appropriate length based on max value.
 
@@ -145,11 +163,7 @@ def int_to_bytearray(value: int, max_value: MaxUintValues) -> bytearray:
         max_value = MaxUintValues(max_value)
 
     # Determine byte size needed (default to single byte, max 255 value)
-    num_bytes = 1
-    if max_value == MaxUintValues.UINT16_MAX:
-        num_bytes = 2
-    elif max_value == MaxUintValues.UINT32_MAX:
-        num_bytes = 4
+    num_bytes = number_of_bytes_from_max_value(max_value)
 
     # Determine actual max value and ensure value is in range
     max_value = (2**(num_bytes*8)) - 1

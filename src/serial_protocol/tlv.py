@@ -128,16 +128,13 @@ class TLVPacket:
             )
 
         value_bytes = packet[num_len_bytes + 1:]
-
-        decoder_map = {
-            TLVValueReturnType.BYTEARRAY: lambda b: b,
-            TLVValueReturnType.INT: utils.bytearray_to_int,
-            TLVValueReturnType.FLOAT: lambda b: self._decode_float(b),
-        }
-
-        try:
-            value_ = decoder_map[return_value_as](value_bytes)
-        except KeyError:
+        if return_value_as == TLVValueReturnType.BYTEARRAY:
+            value_ = value_bytes
+        elif return_value_as == TLVValueReturnType.INT:
+            value_ = utils.bytearray_to_int(value_bytes)
+        elif return_value_as == TLVValueReturnType.FLOAT:
+            value_ = self._decode_float(value_bytes)
+        else:
             raise ValueError(f"Unsupported return type: {return_value_as}")
 
         return type_, length_, value_

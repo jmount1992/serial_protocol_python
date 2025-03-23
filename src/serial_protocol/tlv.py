@@ -6,148 +6,177 @@ from serial_protocol import utils
 
 
 class TLVValueReturnType(Enum):
+    """
+    Supported return types for decoding the value portion of a TLV packet.
+    """
     BYTEARRAY = "bytearray"
     INT = "int"
     FLOAT = "float"
 
 
-class tlv_packet():
+class TLVPacket:
+    """
+    Type-Length-Value packet encoder and decoder.
+
+    This class supports configurable field widths for both the length and value
+    fields using `MaxUInt`, and supports IEEE 754 float encoding via `FloatPrecision`.
+
+    Example:
+        >>> tlv = TLVPacket()
+        >>> packet = tlv.encode(1, 300)
+        >>> tlv.decode(packet)
+        (1, 2, 300)
+    """
 
     def __init__(self,
                  max_data_length: utils.MaxUInt = utils.MaxUInt.UINT8,
                  max_data_value: utils.MaxUInt = utils.MaxUInt.UINT8,
                  float_byte_size: utils.FloatPrecision = utils.FloatPrecision.FLOAT32):
 
-        # Check and set properties
-        self.__max_data_length = self.__max_data_length_setter(max_data_length)
-        self.__max_data_value = self.__max_data_value_setter(max_data_value)
-        self.__float_byte_size = self.__float_byte_size_setter(float_byte_size)
+        self.__max_data_length = utils.coerce_enum(max_data_length, utils.MaxUInt)
+        self.__max_data_value = utils.coerce_enum(max_data_value, utils.MaxUInt)
+        self.__float_byte_size = utils.coerce_enum(float_byte_size, utils.FloatPrecision)
 
     @property
     def max_data_length(self) -> utils.MaxUInt:
-        return utils.MaxUInt(self.__max_data_length)
+        return self.__max_data_length
 
     @max_data_length.setter
     def max_data_length(self, value: utils.MaxUInt):
-        self.__max_data_length = self.__max_data_length_setter(value)
-
-    def __max_data_length_setter(self, value: utils.MaxUInt):
-        if not isinstance(value, utils.MaxUInt):
-            if value not in {e.value for e in utils.MaxUInt}:
-                raise ValueError("Invalid value for max_data_length attribute.")
-        return value
+        self.__max_data_length = utils.coerce_enum(value, utils.MaxUInt)
 
     @property
     def max_data_value(self) -> utils.MaxUInt:
-        return utils.MaxUInt(self.__max_data_value)
+        return self.__max_data_value
 
     @max_data_value.setter
     def max_data_value(self, value: utils.MaxUInt):
-        self.__max_data_value = self.__max_data_value_setter(value)
-
-    def __max_data_value_setter(self, value: utils.MaxUInt):
-        if not isinstance(value, utils.MaxUInt):
-            if value not in {e.value for e in utils.MaxUInt}:
-                raise ValueError("Invalid value for max_data_value attribute.")
-        return value
+        self.__max_data_value = utils.coerce_enum(value, utils.MaxUInt)
 
     @property
     def float_byte_size(self) -> utils.FloatPrecision:
-        return utils.FloatPrecision(self.__float_byte_size)
+        return self.__float_byte_size
 
     @float_byte_size.setter
     def float_byte_size(self, value: utils.FloatPrecision):
-        self.__float_byte_size = self.__float_byte_size_setter(value)
-
-    def __float_byte_size_setter(self, value: utils.FloatPrecision):
-        if not isinstance(value, utils.FloatPrecision):
-            if value not in {e.value for e in utils.FloatPrecision}:
-                raise ValueError("Invalid value for float_byte_size attribute.")
-        return value
+        self.__float_byte_size = utils.coerce_enum(value, utils.FloatPrecision)
 
     def encode(self,
                type_: Union[int, bytearray],
-               value_: Union[int, float, bytearray]):
+               value_: Union[int, float, bytearray]) -> bytearray:
         """
-        type_ must be in range [0,255]
+        Encode a TLV packet.
+
+        Args:
+            type_ (int | bytearray): Type field (must fit in one byte).
+            value_ (int | float | bytearray): Value field to encode.
+
+        Returns:
+            bytearray: Encoded TLV packet.
+
+        Example:
+            >>> TLVPacket().encode(1, 42)
+            bytearray(b'\\x01\\x01\\x00\\x2a')
         """
         type_ = self._validate_and_convert_type(type_)
         value_ = self._validate_and_convert_value(value_)
         length_ = utils.int_to_bytearray(len(value_), self.max_data_length)
 
-        # Assemble and return packet
         return bytearray(type_ + length_ + value_)
 
-    def decode(self, packet: bytearray, 
-               return_value_as: TLVValueReturnType = TLVValueReturnType.BYTEARRAY) -> tuple:
-        """Decode a TLV packet and return value as bytearray, int, or float.
+    def decode(self,
+               packet: bytearray,
+               return_value_as: TLVValueReturnType = TLVValueReturnType.BYTEARRAY
+               ) -> tuple[int, int, Union[int, float, bytearray]]:
+        """
+        Decode a TLV packet and extract type, length, and value.
 
         Args:
-            packet (bytearray): The encoded TLV packet.
-            return_value_as (str): One of "bytearray", "int", or "float".
+            packet (bytearray): The TLV packet to decode.
+            return_value_as (TLVValueReturnType): Desired return type for the value.
 
         Returns:
-            tuple: (type: int, length: int, value: Union[int, float, bytearray])
+            tuple[int, int, int|float|bytearray]: (type, length, decoded value)
 
         Raises:
-            ValueError: If packet is malformed or if value format doesn't match length.
+            TypeError: If inputs are of incorrect types.
+            ValueError: If packet structure is invalid.
+
+        Example:
+            >>> tlv = TLVPacket()
+            >>> pkt = tlv.encode(1, 123)
+            >>> tlv.decode(pkt, TLVValueReturnType.INT)
+            (1, 1, 123)
         """
-        if isinstance(packet, bytearray) == False:
-            raise TypeError("The packet must be of type bytearray.")
-        if isinstance(return_value_as, TLVValueReturnType) == False:
-            raise TypeError("The return_value_as must be of type TLVValueReturnType.")
+        if not isinstance(packet, bytearray):
+            raise TypeError(f"Expected bytearray for packet, got {type(packet).__name__}")
+        if not isinstance(return_value_as, TLVValueReturnType):
+            raise TypeError(f"Expected TLVValueReturnType, got {type(return_value_as).__name__}")
 
         num_len_bytes = self.max_data_length.num_bytes
-        if len(packet) < 1 + self.max_data_length.num_bytes:
-            raise ValueError(f"Packet is too short to contain a valid TLV header (got {len(packet)} bytes).")
+        if len(packet) < 1 + num_len_bytes:
+            raise ValueError(f"Packet too short to contain a valid TLV header (got {len(packet)} bytes).")
 
-        # Parse type and length
         type_ = int(packet[0])
-        length_ = int.from_bytes(packet[1:num_len_bytes+1], byteorder='little')
+        length_ = int.from_bytes(packet[1:num_len_bytes + 1], byteorder='little')
         expected_total_len = 1 + num_len_bytes + length_
+
         if len(packet) != expected_total_len:
             raise ValueError(
-                f"Packet length mismatch: expected {expected_total_len}"
-                f" bytes, got {len(packet)} bytes."
+                f"Packet length mismatch: expected {expected_total_len} bytes "
+                f"(type=1, length field={length_}), got {len(packet)} bytes."
             )
 
-        # Extract value field
-        value_bytes = packet[num_len_bytes+1:expected_total_len]
+        value_bytes = packet[num_len_bytes + 1:]
 
-        # Decode value
-        if return_value_as == TLVValueReturnType.BYTEARRAY:
-            value_ = value_bytes
-        elif return_value_as == TLVValueReturnType.INT:
-            value_ = utils.bytearray_to_int(value_bytes)
-        elif return_value_as == TLVValueReturnType.FLOAT:
-            if self.float_byte_size.num_bytes != len(value_bytes):
-                raise ValueError(
-                    "Float value length mismatch:"
-                    f" expected {self.float_byte_size.value} bytes,"
-                    f" got {len(value_bytes)}."
-                )
-            value_ = utils.bytearray_to_float(value_bytes, self.float_byte_size)
+        decoder_map = {
+            TLVValueReturnType.BYTEARRAY: lambda b: b,
+            TLVValueReturnType.INT: utils.bytearray_to_int,
+            TLVValueReturnType.FLOAT: lambda b: self._decode_float_checked(b),
+        }
+
+        try:
+            value_ = decoder_map[return_value_as](value_bytes)
+        except KeyError:
+            raise ValueError(f"Unsupported return type: {return_value_as}")
 
         return type_, length_, value_
 
-    def _validate_and_convert_type(self,
-                                    type_: Union[int, bytearray]
-                                    ) -> bytearray:
-        """Validate and convert type_ to a bytearray (1-byte identifier)."""
-        if not isinstance(type_, (int, bytearray)):
-            raise TypeError("Input type_ must be an integer or bytearray.")
-        if isinstance(type_, bytearray) and len(type_) != 1:
-            raise ValueError("Input type_ must be exactly 1 byte.")
+    def _decode_float_checked(self, b: bytearray) -> float:
+        """Helper to decode float with byte size check."""
+        if len(b) != self.float_byte_size.num_bytes:
+            raise ValueError(
+                f"Float value length mismatch: expected {self.float_byte_size.num_bytes} bytes, got {len(b)}."
+            )
+        return utils.bytearray_to_float(b, self.float_byte_size)
+
+    def _validate_and_convert_type(self, type_: Union[int, bytearray]) -> bytearray:
+        """
+        Validate and convert the type field to a single-byte bytearray.
+
+        Example:
+            >>> TLVPacket()._validate_and_convert_type(5)
+            bytearray(b'\\x05')
+        """
         if isinstance(type_, int):
             if not (0 <= type_ <= 255):
-                raise ValueError("Input type_ must be in the range [0,255].")
-            type_ = bytearray([type_])
-        return type_
+                raise ValueError("Input type_ must be in the range [0, 255].")
+            return bytearray([type_])
+        if isinstance(type_, bytearray):
+            if len(type_) != 1:
+                raise ValueError("Input type_ must be exactly 1 byte.")
+            return type_
 
-    def _validate_and_convert_value(self,
-                                     value_: Union[int, float, bytearray]
-                                     ) -> bytearray:
-        """Convert value_ to the appropriate byte representation."""
+        raise TypeError("Input type_ must be an integer or a 1-byte bytearray.")
+
+    def _validate_and_convert_value(self, value_: Union[int, float, bytearray]) -> bytearray:
+        """
+        Validate and convert the value to a bytearray.
+
+        Example:
+            >>> TLVPacket()._validate_and_convert_value(42)
+            bytearray(b'*')
+        """
         if isinstance(value_, int):
             return utils.int_to_bytearray(value_, self.max_data_value)
         if isinstance(value_, float):

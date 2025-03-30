@@ -38,6 +38,7 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../cobs.html">COBS Encode/Decode</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tlv.html">TLV Packet</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../utils.html">Utilities</a></li>
 </ul>
 
@@ -68,96 +69,96 @@
   <h1>Source code for serial_protocol.utils</h1><div class="highlight"><pre>
 <span></span><span class="ch">#!/usr/bin/env python3</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">struct</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">struct</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Union</span>
 
 <span class="c1">########################</span>
 <span class="c1"># --- ENUM HELPERS --- #</span>
 <span class="c1">########################</span>
 
-<div class="viewcode-block" id="MaxUInt"><a class="viewcode-back" href="../../utils.html#serial_protocol.utils.MaxUInt">[docs]</a><span class="k">class</span><span class="w"> </span><span class="nc">MaxUInt</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+
+<div class="viewcode-block" id="ValueFormat"><a class="viewcode-back" href="../../utils.html#serial_protocol.utils.ValueFormat">[docs]</a><span class="k">class</span><span class="w"> </span><span class="nc">ValueFormat</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Enumeration of maximum unsigned integer values with associated byte sizes.</span>
+<span class="sd">    Enumeration of supported value formats, including unsigned integers and IEEE 754 floats.</span>
 
-<span class="sd">    Members:</span>
-<span class="sd">        UINT8:  8-bit unsigned integer (1 byte, max 255)</span>
-<span class="sd">        UINT16: 16-bit unsigned integer (2 bytes, max 65535)</span>
-<span class="sd">        UINT32: 32-bit unsigned integer (4 bytes, max 4294967295)</span>
-
-<span class="sd">    Properties:</span>
-<span class="sd">        num_bytes (int): Number of bytes required to represent the value.</span>
-<span class="sd">        max_value (int): Maximum value for the unsigned integer type.</span>
+<span class="sd">    Each member defines:</span>
+<span class="sd">    - Number of bytes (1, 2, 4, or 8)</span>
+<span class="sd">    - Category: either &#39;uint&#39; or &#39;float&#39;</span>
+<span class="sd">    - A descriptive label (e.g., &#39;uint16&#39;)</span>
+<span class="sd">    - A format character used by `struct` (only for float types)</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; MaxUInt.UINT16.num_bytes</span>
-<span class="sd">        2</span>
-<span class="sd">        &gt;&gt;&gt; MaxUInt.UINT16.max_value</span>
-<span class="sd">        65535</span>
+<span class="sd">        &gt;&gt;&gt; ValueFormat.FLOAT32.num_bytes</span>
+<span class="sd">        4</span>
+<span class="sd">        &gt;&gt;&gt; ValueFormat.UINT16.category</span>
+<span class="sd">        &#39;uint&#39;</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">UINT8</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">255</span><span class="p">)</span>
-    <span class="n">UINT16</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">65535</span><span class="p">)</span>
-    <span class="n">UINT32</span> <span class="o">=</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">4294967295</span><span class="p">)</span>
+    <span class="n">UINT8</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;uint&quot;</span><span class="p">,</span> <span class="s2">&quot;uint8&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">UINT16</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;uint&quot;</span><span class="p">,</span> <span class="s2">&quot;uint16&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">UINT32</span> <span class="o">=</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="s2">&quot;uint&quot;</span><span class="p">,</span> <span class="s2">&quot;uint32&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">FLOAT32</span> <span class="o">=</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="s2">&quot;float&quot;</span><span class="p">,</span> <span class="s2">&quot;float32&quot;</span><span class="p">,</span> <span class="s1">&#39;f&#39;</span><span class="p">)</span>
+    <span class="n">FLOAT64</span> <span class="o">=</span> <span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="s2">&quot;float&quot;</span><span class="p">,</span> <span class="s2">&quot;float64&quot;</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">num_bytes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Number of bytes used to store the value.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">category</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;The category of the value type: &#39;uint&#39; or &#39;float&#39;.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">label</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;A human-readable string label for the format.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">format_char</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Struct format character used for float encoding/decoding.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">max_value</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span></div>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Maximum value (only valid for unsigned int types).&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_uint</span><span class="p">():</span>
+            <span class="k">return</span> <span class="mi">2</span><span class="o">**</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_bytes</span> <span class="o">*</span> <span class="mi">8</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="kc">None</span>
 
+<div class="viewcode-block" id="ValueFormat.is_uint"><a class="viewcode-back" href="../../utils.html#serial_protocol.utils.ValueFormat.is_uint">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">is_uint</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return True if format represents an unsigned integer.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">category</span> <span class="o">==</span> <span class="s2">&quot;uint&quot;</span></div>
 
-<div class="viewcode-block" id="FloatPrecision"><a class="viewcode-back" href="../../utils.html#serial_protocol.utils.FloatPrecision">[docs]</a><span class="k">class</span><span class="w"> </span><span class="nc">FloatPrecision</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Enumeration of IEEE 754 floating point precisions with byte size and format.</span>
+<div class="viewcode-block" id="ValueFormat.is_float"><a class="viewcode-back" href="../../utils.html#serial_protocol.utils.ValueFormat.is_float">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">is_float</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return True if format represents a float.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">category</span> <span class="o">==</span> <span class="s2">&quot;float&quot;</span></div>
 
-<span class="sd">    Members:</span>
-<span class="sd">        FLOAT32: 32-bit (4-byte) single-precision float (&#39;f&#39; format character)</span>
-<span class="sd">        FLOAT64: 64-bit (8-byte) double-precision float (&#39;d&#39; format character)</span>
+<div class="viewcode-block" id="ValueFormat.coerce"><a class="viewcode-back" href="../../utils.html#serial_protocol.utils.ValueFormat.coerce">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">coerce</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="s1">&#39;ValueFormat&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s1">&#39;ValueFormat&#39;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Ensure the input is a ValueFormat enum instance.</span>
 
-<span class="sd">    Properties:</span>
-<span class="sd">        num_bytes (int): Number of bytes used to represent the float.</span>
-<span class="sd">        format_char (str): Format character used for struct packing/unpacking.</span>
+<span class="sd">        Args:</span>
+<span class="sd">            value (ValueFormat or str): Value to convert. If str, must match a member&#39;s label.</span>
 
-<span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; FloatPrecision.FLOAT64.num_bytes</span>
-<span class="sd">        8</span>
-<span class="sd">        &gt;&gt;&gt; FloatPrecision.FLOAT64.format_char</span>
-<span class="sd">        &#39;d&#39;</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">FLOAT32</span> <span class="o">=</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="s1">&#39;f&#39;</span><span class="p">)</span>  <span class="c1"># IEEE 754 single-precision</span>
-    <span class="n">FLOAT64</span> <span class="o">=</span> <span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span><span class="p">)</span>  <span class="c1"># IEEE 754 double-precision</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            ValueFormat: The coerced enum value.</span>
 
-    <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">num_bytes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If input doesn&#39;t match any label.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="bp">cls</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">value</span>
+        <span class="k">for</span> <span class="n">member</span> <span class="ow">in</span> <span class="bp">cls</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="o">==</span> <span class="n">member</span><span class="o">.</span><span class="n">label</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">member</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid value for </span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
-    <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">format_char</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span></div>
-
-
-<div class="viewcode-block" id="coerce_enum"><a class="viewcode-back" href="../../utils.html#serial_protocol.utils.coerce_enum">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">coerce_enum</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">enum_class</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Ensures that a given value is an instance of the provided Enum class.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        value: The value to check or convert.</span>
-<span class="sd">        enum_class (Enum): The target Enum class.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        Enum: An instance of the Enum class.</span>
-
-<span class="sd">    Raises:</span>
-<span class="sd">        ValueError: If value cannot be converted to the Enum.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">enum_class</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">value</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">enum_class</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid value for </span><span class="si">{</span><span class="n">enum_class</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span></div>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">label</span></div>
 
 
 <span class="c1">##########################</span>
@@ -261,13 +262,13 @@
     <span class="k">return</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{:03d}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">data</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="int_to_bytearray"><a class="viewcode-back" href="../../utils.html#serial_protocol.utils.int_to_bytearray">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">int_to_bytearray</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">max_uint</span><span class="p">:</span> <span class="n">MaxUInt</span><span class="p">,</span> <span class="n">byteorder</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;little&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytearray</span><span class="p">:</span>
+<div class="viewcode-block" id="int_to_bytearray"><a class="viewcode-back" href="../../utils.html#serial_protocol.utils.int_to_bytearray">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">int_to_bytearray</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">format_</span><span class="p">:</span> <span class="n">ValueFormat</span><span class="p">,</span> <span class="n">byteorder</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;little&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytearray</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Converts an integer into a bytearray based on the MaxUInt limit.</span>
+<span class="sd">    Converts an integer into a bytearray based on a value format.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        value (int): The integer value to convert.</span>
-<span class="sd">        max_uint (MaxUInt): The maximum uint type.</span>
+<span class="sd">        format_ (format): The format type. Cannot be FLOAT32 or FLOAT64.</span>
 <span class="sd">        byteorder (str): Byte order (&#39;little&#39; or &#39;big&#39;). Default is &#39;little&#39;.</span>
 
 <span class="sd">    Returns:</span>
@@ -277,13 +278,15 @@
 <span class="sd">        ValueError: If value is out of bounds.</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; int_to_bytearray(1025, MaxUInt.UINT16)</span>
+<span class="sd">        &gt;&gt;&gt; int_to_bytearray(1025, ValueFormat.UINT16)</span>
 <span class="sd">        bytearray(b&#39;\x01\x04&#39;)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">max_uint</span> <span class="o">=</span> <span class="n">coerce_enum</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">max_uint</span><span class="p">,</span> <span class="n">enum_class</span><span class="o">=</span><span class="n">MaxUInt</span><span class="p">)</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">value</span> <span class="o">&lt;=</span> <span class="n">max_uint</span><span class="o">.</span><span class="n">max_value</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Value must be in range [0, </span><span class="si">{</span><span class="n">max_uint</span><span class="o">.</span><span class="n">max_value</span><span class="si">}</span><span class="s2">].&quot;</span><span class="p">)</span>
-    <span class="k">return</span> <span class="nb">bytearray</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">to_bytes</span><span class="p">(</span><span class="n">max_uint</span><span class="o">.</span><span class="n">num_bytes</span><span class="p">,</span> <span class="n">byteorder</span><span class="o">=</span><span class="n">byteorder</span><span class="p">))</span></div>
+    <span class="n">format_</span> <span class="o">=</span> <span class="n">ValueFormat</span><span class="o">.</span><span class="n">coerce</span><span class="p">(</span><span class="n">format_</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">format_</span><span class="o">.</span><span class="n">is_float</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The format cannot be FLOAT32 or FLOAT64.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">value</span> <span class="o">&lt;=</span> <span class="n">format_</span><span class="o">.</span><span class="n">max_value</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Value must be in range [0, </span><span class="si">{</span><span class="n">format_</span><span class="o">.</span><span class="n">max_value</span><span class="si">}</span><span class="s2">].&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">bytearray</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">to_bytes</span><span class="p">(</span><span class="n">format_</span><span class="o">.</span><span class="n">num_bytes</span><span class="p">,</span> <span class="n">byteorder</span><span class="o">=</span><span class="n">byteorder</span><span class="p">))</span></div>
 
 
 <div class="viewcode-block" id="bytearray_to_int"><a class="viewcode-back" href="../../utils.html#serial_protocol.utils.bytearray_to_int">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">bytearray_to_int</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">bytearray</span><span class="p">,</span> <span class="n">byteorder</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;little&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
@@ -306,46 +309,57 @@
     <span class="k">return</span> <span class="nb">int</span><span class="o">.</span><span class="n">from_bytes</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">byteorder</span><span class="o">=</span><span class="n">byteorder</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="float_to_bytearray"><a class="viewcode-back" href="../../utils.html#serial_protocol.utils.float_to_bytearray">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">float_to_bytearray</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">precision</span><span class="p">:</span> <span class="n">FloatPrecision</span><span class="p">,</span> <span class="n">byteorder</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;little&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytearray</span><span class="p">:</span>
+<div class="viewcode-block" id="float_to_bytearray"><a class="viewcode-back" href="../../utils.html#serial_protocol.utils.float_to_bytearray">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">float_to_bytearray</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">precision</span><span class="p">:</span> <span class="n">ValueFormat</span><span class="p">,</span> <span class="n">byteorder</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;little&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytearray</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Converts a float to a bytearray using IEEE 754 format.</span>
+<span class="sd">    Convert a float to a bytearray using IEEE 754 format.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        value (float): The float to convert.</span>
-<span class="sd">        precision (FloatPrecision): Desired float precision.</span>
-<span class="sd">        byteorder (str): Byte order (&#39;little&#39; or &#39;big&#39;). Default is &#39;little&#39;.</span>
+<span class="sd">        value (float): The float to encode.</span>
+<span class="sd">        precision (ValueFormat): Must be FLOAT32 or FLOAT64.</span>
+<span class="sd">        byteorder (str): Byte order (&#39;little&#39; or &#39;big&#39;).</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        bytearray: The resulting bytearray.</span>
+<span class="sd">        bytearray: Encoded float bytes.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: If precision is not a valid float format.</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; float_to_bytearray(3.14, FloatPrecision.FLOAT32)</span>
-<span class="sd">        bytearray(b&#39;\xc3\xf5H@&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; float_to_bytearray(3.14, ValueFormat.FLOAT32)</span>
+<span class="sd">        bytearray(b&#39;\\xc3\\xf5H@&#39;)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">precision</span> <span class="o">=</span> <span class="n">coerce_enum</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">precision</span><span class="p">,</span> <span class="n">enum_class</span><span class="o">=</span><span class="n">FloatPrecision</span><span class="p">)</span>
+    <span class="n">precision</span> <span class="o">=</span> <span class="n">ValueFormat</span><span class="o">.</span><span class="n">coerce</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">precision</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">precision</span><span class="o">.</span><span class="n">is_float</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The precision must be FLOAT32 or FLOAT64.&quot;</span><span class="p">)</span>
     <span class="n">packed</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">precision</span><span class="o">.</span><span class="n">format_char</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
     <span class="k">return</span> <span class="nb">bytearray</span><span class="p">(</span><span class="n">packed</span> <span class="k">if</span> <span class="n">byteorder</span> <span class="o">==</span> <span class="s2">&quot;little&quot;</span> <span class="k">else</span> <span class="n">packed</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span></div>
 
 
-<div class="viewcode-block" id="bytearray_to_float"><a class="viewcode-back" href="../../utils.html#serial_protocol.utils.bytearray_to_float">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">bytearray_to_float</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">bytearray</span><span class="p">,</span> <span class="n">precision</span><span class="p">:</span> <span class="n">FloatPrecision</span><span class="p">,</span> <span class="n">byteorder</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;little&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<div class="viewcode-block" id="bytearray_to_float"><a class="viewcode-back" href="../../utils.html#serial_protocol.utils.bytearray_to_float">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">bytearray_to_float</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">bytearray</span><span class="p">,</span> <span class="n">precision</span><span class="p">:</span> <span class="n">ValueFormat</span><span class="p">,</span> <span class="n">byteorder</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;little&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Converts a bytearray to a float using IEEE 754 format.</span>
+<span class="sd">    Decode a float from a bytearray using IEEE 754 format.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        value (bytearray): The bytearray to convert.</span>
-<span class="sd">        precision (FloatPrecision): Desired float precision.</span>
-<span class="sd">        byteorder (str): Byte order (&#39;little&#39; or &#39;big&#39;). Default is &#39;little&#39;.</span>
+<span class="sd">        value (bytearray): Raw float bytes.</span>
+<span class="sd">        precision (ValueFormat): Must be FLOAT32 or FLOAT64.</span>
+<span class="sd">        byteorder (str): Byte order (&#39;little&#39; or &#39;big&#39;).</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        float: The resulting float.</span>
+<span class="sd">        float: Decoded float value.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        TypeError: If input is not a bytearray.</span>
+<span class="sd">        ValueError: If precision is not a valid float format.</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; bytearray_to_float(bytearray(b&#39;\xc3\xf5H@&#39;), FloatPrecision.FLOAT32)</span>
+<span class="sd">        &gt;&gt;&gt; bytearray_to_float(bytearray(b&#39;\\xc3\\xf5H@&#39;), ValueFormat.FLOAT32)</span>
 <span class="sd">        3.14</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">bytearray</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Input value must be of type bytearray.&quot;</span><span class="p">)</span>
-    <span class="n">precision</span> <span class="o">=</span> <span class="n">coerce_enum</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">precision</span><span class="p">,</span> <span class="n">enum_class</span><span class="o">=</span><span class="n">FloatPrecision</span><span class="p">)</span>
+    <span class="n">precision</span> <span class="o">=</span> <span class="n">ValueFormat</span><span class="o">.</span><span class="n">coerce</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">precision</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">precision</span><span class="o">.</span><span class="n">is_float</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The precision must be FLOAT32 or FLOAT64.&quot;</span><span class="p">)</span>
     <span class="n">byte_seq</span> <span class="o">=</span> <span class="nb">bytes</span><span class="p">(</span><span class="n">value</span> <span class="k">if</span> <span class="n">byteorder</span> <span class="o">==</span> <span class="s2">&quot;little&quot;</span> <span class="k">else</span> <span class="n">value</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
     <span class="k">return</span> <span class="n">struct</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="n">precision</span><span class="o">.</span><span class="n">format_char</span><span class="p">,</span> <span class="n">byte_seq</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span></div>
 </pre></div>

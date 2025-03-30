@@ -19,7 +19,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="prev" title="COBS Encode/Decode" href="cobs.html" /> 
+    <link rel="prev" title="TLV Packet" href="tlv.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -40,6 +40,7 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="cobs.html">COBS Encode/Decode</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tlv.html">TLV Packet</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Utilities</a><ul class="simple">
 </ul>
 </li>
@@ -74,90 +75,112 @@
 <div class="toctree-wrapper compound">
 </div>
 <span class="target" id="module-serial_protocol.utils"></span><dl class="py class">
-<dt class="sig sig-object py" id="serial_protocol.utils.FloatPrecision">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">serial_protocol.utils.</span></span><span class="sig-name descname"><span class="pre">FloatPrecision</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names=&lt;not</span> <span class="pre">given&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">*values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qualname=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start=1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/serial_protocol/utils.html#FloatPrecision"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#serial_protocol.utils.FloatPrecision" title="Permalink to this definition"></a></dt>
-<dd><p>Enumeration of IEEE 754 floating point precisions with byte size and format.</p>
-<dl class="simple">
-<dt>Members:</dt><dd><p>FLOAT32: 32-bit (4-byte) single-precision float (‘f’ format character)
-FLOAT64: 64-bit (8-byte) double-precision float (‘d’ format character)</p>
-</dd>
-<dt>Properties:</dt><dd><p>num_bytes (int): Number of bytes used to represent the float.
-format_char (str): Format character used for struct packing/unpacking.</p>
-</dd>
-</dl>
+<dt class="sig sig-object py" id="serial_protocol.utils.ValueFormat">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">serial_protocol.utils.</span></span><span class="sig-name descname"><span class="pre">ValueFormat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names=&lt;not</span> <span class="pre">given&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">*values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qualname=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start=1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/serial_protocol/utils.html#ValueFormat"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#serial_protocol.utils.ValueFormat" title="Permalink to this definition"></a></dt>
+<dd><p>Enumeration of supported value formats, including unsigned integers and IEEE 754 floats.</p>
+<p>Each member defines:
+- Number of bytes (1, 2, 4, or 8)
+- Category: either ‘uint’ or ‘float’
+- A descriptive label (e.g., ‘uint16’)
+- A format character used by <cite>struct</cite> (only for float types)</p>
 <p class="rubric">Example</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">FloatPrecision</span><span class="o">.</span><span class="n">FLOAT64</span><span class="o">.</span><span class="n">num_bytes</span>
-<span class="go">8</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">FloatPrecision</span><span class="o">.</span><span class="n">FLOAT64</span><span class="o">.</span><span class="n">format_char</span>
-<span class="go">&#39;d&#39;</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">ValueFormat</span><span class="o">.</span><span class="n">FLOAT32</span><span class="o">.</span><span class="n">num_bytes</span>
+<span class="go">4</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ValueFormat</span><span class="o">.</span><span class="n">UINT16</span><span class="o">.</span><span class="n">category</span>
+<span class="go">&#39;uint&#39;</span>
 </pre></div>
 </div>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="serial_protocol.utils.FloatPrecision.FLOAT32">
-<span class="sig-name descname"><span class="pre">FLOAT32</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(4,</span> <span class="pre">'f')</span></em><a class="headerlink" href="#serial_protocol.utils.FloatPrecision.FLOAT32" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="serial_protocol.utils.ValueFormat.FLOAT32">
+<span class="sig-name descname"><span class="pre">FLOAT32</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(4,</span> <span class="pre">'float',</span> <span class="pre">'float32',</span> <span class="pre">'f')</span></em><a class="headerlink" href="#serial_protocol.utils.ValueFormat.FLOAT32" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="serial_protocol.utils.FloatPrecision.FLOAT64">
-<span class="sig-name descname"><span class="pre">FLOAT64</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(8,</span> <span class="pre">'d')</span></em><a class="headerlink" href="#serial_protocol.utils.FloatPrecision.FLOAT64" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="serial_protocol.utils.ValueFormat.FLOAT64">
+<span class="sig-name descname"><span class="pre">FLOAT64</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(8,</span> <span class="pre">'float',</span> <span class="pre">'float64',</span> <span class="pre">'d')</span></em><a class="headerlink" href="#serial_protocol.utils.ValueFormat.FLOAT64" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="serial_protocol.utils.ValueFormat.UINT16">
+<span class="sig-name descname"><span class="pre">UINT16</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(2,</span> <span class="pre">'uint',</span> <span class="pre">'uint16',</span> <span class="pre">None)</span></em><a class="headerlink" href="#serial_protocol.utils.ValueFormat.UINT16" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="serial_protocol.utils.ValueFormat.UINT32">
+<span class="sig-name descname"><span class="pre">UINT32</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(4,</span> <span class="pre">'uint',</span> <span class="pre">'uint32',</span> <span class="pre">None)</span></em><a class="headerlink" href="#serial_protocol.utils.ValueFormat.UINT32" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="serial_protocol.utils.ValueFormat.UINT8">
+<span class="sig-name descname"><span class="pre">UINT8</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(1,</span> <span class="pre">'uint',</span> <span class="pre">'uint8',</span> <span class="pre">None)</span></em><a class="headerlink" href="#serial_protocol.utils.ValueFormat.UINT8" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py property">
-<dt class="sig sig-object py" id="serial_protocol.utils.FloatPrecision.format_char">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">format_char</span></span><a class="headerlink" href="#serial_protocol.utils.FloatPrecision.format_char" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="serial_protocol.utils.FloatPrecision.num_bytes">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">num_bytes</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#serial_protocol.utils.FloatPrecision.num_bytes" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
+<dt class="sig sig-object py" id="serial_protocol.utils.ValueFormat.category">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">category</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#serial_protocol.utils.ValueFormat.category" title="Permalink to this definition"></a></dt>
+<dd><p>‘uint’ or ‘float’.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>The category of the value type</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="py class">
-<dt class="sig sig-object py" id="serial_protocol.utils.MaxUInt">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">serial_protocol.utils.</span></span><span class="sig-name descname"><span class="pre">MaxUInt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names=&lt;not</span> <span class="pre">given&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">*values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qualname=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start=1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/serial_protocol/utils.html#MaxUInt"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#serial_protocol.utils.MaxUInt" title="Permalink to this definition"></a></dt>
-<dd><p>Enumeration of maximum unsigned integer values with associated byte sizes.</p>
-<dl class="simple">
-<dt>Members:</dt><dd><p>UINT8:  8-bit unsigned integer (1 byte, max 255)
-UINT16: 16-bit unsigned integer (2 bytes, max 65535)
-UINT32: 32-bit unsigned integer (4 bytes, max 4294967295)</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="serial_protocol.utils.ValueFormat.coerce">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">coerce</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#serial_protocol.utils.ValueFormat" title="serial_protocol.utils.ValueFormat"><span class="pre">ValueFormat</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#serial_protocol.utils.ValueFormat" title="serial_protocol.utils.ValueFormat"><span class="pre">ValueFormat</span></a></span></span><a class="reference internal" href="_modules/serial_protocol/utils.html#ValueFormat.coerce"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#serial_protocol.utils.ValueFormat.coerce" title="Permalink to this definition"></a></dt>
+<dd><p>Ensure the input is a ValueFormat enum instance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>value</strong> (<a class="reference internal" href="#serial_protocol.utils.ValueFormat" title="serial_protocol.utils.ValueFormat"><em>ValueFormat</em></a><em> or </em><em>str</em>) – Value to convert. If str, must match a member’s label.</p>
 </dd>
-<dt>Properties:</dt><dd><p>num_bytes (int): Number of bytes required to represent the value.
-max_value (int): Maximum value for the unsigned integer type.</p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The coerced enum value.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#serial_protocol.utils.ValueFormat" title="serial_protocol.utils.ValueFormat">ValueFormat</a></p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If input doesn’t match any label.</p>
 </dd>
 </dl>
-<p class="rubric">Example</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">MaxUInt</span><span class="o">.</span><span class="n">UINT16</span><span class="o">.</span><span class="n">num_bytes</span>
-<span class="go">2</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">MaxUInt</span><span class="o">.</span><span class="n">UINT16</span><span class="o">.</span><span class="n">max_value</span>
-<span class="go">65535</span>
-</pre></div>
-</div>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="serial_protocol.utils.MaxUInt.UINT16">
-<span class="sig-name descname"><span class="pre">UINT16</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(2,</span> <span class="pre">65535)</span></em><a class="headerlink" href="#serial_protocol.utils.MaxUInt.UINT16" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="serial_protocol.utils.MaxUInt.UINT32">
-<span class="sig-name descname"><span class="pre">UINT32</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(4,</span> <span class="pre">4294967295)</span></em><a class="headerlink" href="#serial_protocol.utils.MaxUInt.UINT32" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="serial_protocol.utils.MaxUInt.UINT8">
-<span class="sig-name descname"><span class="pre">UINT8</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(1,</span> <span class="pre">255)</span></em><a class="headerlink" href="#serial_protocol.utils.MaxUInt.UINT8" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
+</dd></dl>
 
 <dl class="py property">
-<dt class="sig sig-object py" id="serial_protocol.utils.MaxUInt.max_value">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">max_value</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#serial_protocol.utils.MaxUInt.max_value" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
+<dt class="sig sig-object py" id="serial_protocol.utils.ValueFormat.format_char">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">format_char</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#serial_protocol.utils.ValueFormat.format_char" title="Permalink to this definition"></a></dt>
+<dd><p>Struct format character used for float encoding/decoding.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="serial_protocol.utils.ValueFormat.is_float">
+<span class="sig-name descname"><span class="pre">is_float</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="_modules/serial_protocol/utils.html#ValueFormat.is_float"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#serial_protocol.utils.ValueFormat.is_float" title="Permalink to this definition"></a></dt>
+<dd><p>Return True if format represents a float.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="serial_protocol.utils.ValueFormat.is_uint">
+<span class="sig-name descname"><span class="pre">is_uint</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="_modules/serial_protocol/utils.html#ValueFormat.is_uint"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#serial_protocol.utils.ValueFormat.is_uint" title="Permalink to this definition"></a></dt>
+<dd><p>Return True if format represents an unsigned integer.</p>
+</dd></dl>
 
 <dl class="py property">
-<dt class="sig sig-object py" id="serial_protocol.utils.MaxUInt.num_bytes">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">num_bytes</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#serial_protocol.utils.MaxUInt.num_bytes" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
+<dt class="sig sig-object py" id="serial_protocol.utils.ValueFormat.label">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">label</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#serial_protocol.utils.ValueFormat.label" title="Permalink to this definition"></a></dt>
+<dd><p>A human-readable string label for the format.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="serial_protocol.utils.ValueFormat.max_value">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">max_value</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#serial_protocol.utils.ValueFormat.max_value" title="Permalink to this definition"></a></dt>
+<dd><p>Maximum value (only valid for unsigned int types).</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="serial_protocol.utils.ValueFormat.num_bytes">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">num_bytes</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#serial_protocol.utils.ValueFormat.num_bytes" title="Permalink to this definition"></a></dt>
+<dd><p>Number of bytes used to store the value.</p>
+</dd></dl>
 
 </dd></dl>
 
@@ -185,25 +208,31 @@ max_value (int): Maximum value for the unsigned integer type.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="serial_protocol.utils.bytearray_to_float">
-<span class="sig-prename descclassname"><span class="pre">serial_protocol.utils.</span></span><span class="sig-name descname"><span class="pre">bytearray_to_float</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bytearray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">precision</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#serial_protocol.utils.FloatPrecision" title="serial_protocol.utils.FloatPrecision"><span class="pre">FloatPrecision</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">byteorder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'little'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="_modules/serial_protocol/utils.html#bytearray_to_float"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#serial_protocol.utils.bytearray_to_float" title="Permalink to this definition"></a></dt>
-<dd><p>Converts a bytearray to a float using IEEE 754 format.</p>
+<span class="sig-prename descclassname"><span class="pre">serial_protocol.utils.</span></span><span class="sig-name descname"><span class="pre">bytearray_to_float</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bytearray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">precision</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#serial_protocol.utils.ValueFormat" title="serial_protocol.utils.ValueFormat"><span class="pre">ValueFormat</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">byteorder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'little'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="_modules/serial_protocol/utils.html#bytearray_to_float"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#serial_protocol.utils.bytearray_to_float" title="Permalink to this definition"></a></dt>
+<dd><p>Decode a float from a bytearray using IEEE 754 format.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>value</strong> (<em>bytearray</em>) – The bytearray to convert.</p></li>
-<li><p><strong>precision</strong> (<a class="reference internal" href="#serial_protocol.utils.FloatPrecision" title="serial_protocol.utils.FloatPrecision"><em>FloatPrecision</em></a>) – Desired float precision.</p></li>
-<li><p><strong>byteorder</strong> (<em>str</em>) – Byte order (‘little’ or ‘big’). Default is ‘little’.</p></li>
+<li><p><strong>value</strong> (<em>bytearray</em>) – Raw float bytes.</p></li>
+<li><p><strong>precision</strong> (<a class="reference internal" href="#serial_protocol.utils.ValueFormat" title="serial_protocol.utils.ValueFormat"><em>ValueFormat</em></a>) – Must be FLOAT32 or FLOAT64.</p></li>
+<li><p><strong>byteorder</strong> (<em>str</em>) – Byte order (‘little’ or ‘big’).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>The resulting float.</p>
+<dd class="field-even"><p>Decoded float value.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>float</p>
 </dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>TypeError</strong> – If input is not a bytearray.</p></li>
+<li><p><strong>ValueError</strong> – If precision is not a valid float format.</p></li>
+</ul>
+</dd>
 </dl>
 <p class="rubric">Example</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">bytearray_to_float</span><span class="p">(</span><span class="nb">bytearray</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;ÃõH@&#39;</span><span class="p">),</span> <span class="n">FloatPrecision</span><span class="o">.</span><span class="n">FLOAT32</span><span class="p">)</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">bytearray_to_float</span><span class="p">(</span><span class="nb">bytearray</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;</span><span class="se">\xc3\xf5</span><span class="s1">H@&#39;</span><span class="p">),</span> <span class="n">ValueFormat</span><span class="o">.</span><span class="n">FLOAT32</span><span class="p">)</span>
 <span class="go">3.14</span>
 </pre></div>
 </div>
@@ -262,50 +291,30 @@ max_value (int): Maximum value for the unsigned integer type.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="serial_protocol.utils.coerce_enum">
-<span class="sig-prename descclassname"><span class="pre">serial_protocol.utils.</span></span><span class="sig-name descname"><span class="pre">coerce_enum</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enum_class</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/serial_protocol/utils.html#coerce_enum"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#serial_protocol.utils.coerce_enum" title="Permalink to this definition"></a></dt>
-<dd><p>Ensures that a given value is an instance of the provided Enum class.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>value</strong> – The value to check or convert.</p></li>
-<li><p><strong>enum_class</strong> (<em>Enum</em>) – The target Enum class.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>An instance of the Enum class.</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>Enum</p>
-</dd>
-<dt class="field-even">Raises</dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If value cannot be converted to the Enum.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
 <dt class="sig sig-object py" id="serial_protocol.utils.float_to_bytearray">
-<span class="sig-prename descclassname"><span class="pre">serial_protocol.utils.</span></span><span class="sig-name descname"><span class="pre">float_to_bytearray</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">precision</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#serial_protocol.utils.FloatPrecision" title="serial_protocol.utils.FloatPrecision"><span class="pre">FloatPrecision</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">byteorder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'little'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bytearray</span></span></span><a class="reference internal" href="_modules/serial_protocol/utils.html#float_to_bytearray"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#serial_protocol.utils.float_to_bytearray" title="Permalink to this definition"></a></dt>
-<dd><p>Converts a float to a bytearray using IEEE 754 format.</p>
+<span class="sig-prename descclassname"><span class="pre">serial_protocol.utils.</span></span><span class="sig-name descname"><span class="pre">float_to_bytearray</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">precision</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#serial_protocol.utils.ValueFormat" title="serial_protocol.utils.ValueFormat"><span class="pre">ValueFormat</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">byteorder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'little'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bytearray</span></span></span><a class="reference internal" href="_modules/serial_protocol/utils.html#float_to_bytearray"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#serial_protocol.utils.float_to_bytearray" title="Permalink to this definition"></a></dt>
+<dd><p>Convert a float to a bytearray using IEEE 754 format.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>value</strong> (<em>float</em>) – The float to convert.</p></li>
-<li><p><strong>precision</strong> (<a class="reference internal" href="#serial_protocol.utils.FloatPrecision" title="serial_protocol.utils.FloatPrecision"><em>FloatPrecision</em></a>) – Desired float precision.</p></li>
-<li><p><strong>byteorder</strong> (<em>str</em>) – Byte order (‘little’ or ‘big’). Default is ‘little’.</p></li>
+<li><p><strong>value</strong> (<em>float</em>) – The float to encode.</p></li>
+<li><p><strong>precision</strong> (<a class="reference internal" href="#serial_protocol.utils.ValueFormat" title="serial_protocol.utils.ValueFormat"><em>ValueFormat</em></a>) – Must be FLOAT32 or FLOAT64.</p></li>
+<li><p><strong>byteorder</strong> (<em>str</em>) – Byte order (‘little’ or ‘big’).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>The resulting bytearray.</p>
+<dd class="field-even"><p>Encoded float bytes.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>bytearray</p>
 </dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If precision is not a valid float format.</p>
+</dd>
 </dl>
 <p class="rubric">Example</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">float_to_bytearray</span><span class="p">(</span><span class="mf">3.14</span><span class="p">,</span> <span class="n">FloatPrecision</span><span class="o">.</span><span class="n">FLOAT32</span><span class="p">)</span>
-<span class="go">bytearray(b&#39;ÃõH@&#39;)</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">float_to_bytearray</span><span class="p">(</span><span class="mf">3.14</span><span class="p">,</span> <span class="n">ValueFormat</span><span class="o">.</span><span class="n">FLOAT32</span><span class="p">)</span>
+<span class="go">bytearray(b&#39;\xc3\xf5H@&#39;)</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -338,13 +347,13 @@ bytearray(b'ÿ')
 
 <dl class="py function">
 <dt class="sig sig-object py" id="serial_protocol.utils.int_to_bytearray">
-<span class="sig-prename descclassname"><span class="pre">serial_protocol.utils.</span></span><span class="sig-name descname"><span class="pre">int_to_bytearray</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_uint</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#serial_protocol.utils.MaxUInt" title="serial_protocol.utils.MaxUInt"><span class="pre">MaxUInt</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">byteorder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'little'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bytearray</span></span></span><a class="reference internal" href="_modules/serial_protocol/utils.html#int_to_bytearray"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#serial_protocol.utils.int_to_bytearray" title="Permalink to this definition"></a></dt>
-<dd><p>Converts an integer into a bytearray based on the MaxUInt limit.</p>
+<span class="sig-prename descclassname"><span class="pre">serial_protocol.utils.</span></span><span class="sig-name descname"><span class="pre">int_to_bytearray</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">format_</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#serial_protocol.utils.ValueFormat" title="serial_protocol.utils.ValueFormat"><span class="pre">ValueFormat</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">byteorder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'little'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bytearray</span></span></span><a class="reference internal" href="_modules/serial_protocol/utils.html#int_to_bytearray"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#serial_protocol.utils.int_to_bytearray" title="Permalink to this definition"></a></dt>
+<dd><p>Converts an integer into a bytearray based on a value format.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>value</strong> (<em>int</em>) – The integer value to convert.</p></li>
-<li><p><strong>max_uint</strong> (<a class="reference internal" href="#serial_protocol.utils.MaxUInt" title="serial_protocol.utils.MaxUInt"><em>MaxUInt</em></a>) – The maximum uint type.</p></li>
+<li><p><strong>format</strong> (<em>format</em>) – The format type. Cannot be FLOAT32 or FLOAT64.</p></li>
 <li><p><strong>byteorder</strong> (<em>str</em>) – Byte order (‘little’ or ‘big’). Default is ‘little’.</p></li>
 </ul>
 </dd>
@@ -359,7 +368,7 @@ bytearray(b'ÿ')
 </dd>
 </dl>
 <p class="rubric">Example</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">int_to_bytearray</span><span class="p">(</span><span class="mi">1025</span><span class="p">,</span> <span class="n">MaxUInt</span><span class="o">.</span><span class="n">UINT16</span><span class="p">)</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">int_to_bytearray</span><span class="p">(</span><span class="mi">1025</span><span class="p">,</span> <span class="n">ValueFormat</span><span class="o">.</span><span class="n">UINT16</span><span class="p">)</span>
 <span class="go">bytearray(b&#39;&#39;)</span>
 </pre></div>
 </div>
@@ -400,7 +409,7 @@ bytearray(b'ÿ')
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="cobs.html" class="btn btn-neutral float-left" title="COBS Encode/Decode" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="tlv.html" class="btn btn-neutral float-left" title="TLV Packet" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
     </div>
 
   <hr/>

@@ -93,7 +93,7 @@ def test_raw_bytearray_decode():
     packet = tlv.TLVPacket()
     value_bytes = bytearray([0xAB, 0xCD])
     length = len(value_bytes)
-    length_bytes = utils.int_to_bytearray(length, format=utils.ValueFormat.UINT8)
+    length_bytes = utils.int_to_bytearray(length, format_=utils.ValueFormat.UINT8)
     encoded = bytearray([0x05]) + length_bytes + value_bytes
     decoded = packet.decode(encoded, value_format=None)
     assert decoded == (5, length, value_bytes)
@@ -139,7 +139,7 @@ def test_decode_float_size_mismatch():
     packet = tlv.TLVPacket()
     format_ = utils.ValueFormat.FLOAT32
     bad_float = bytearray([0x00, 0x00])  # Too short
-    length = utils.int_to_bytearray(len(bad_float), format=utils.ValueFormat.UINT8)
+    length = utils.int_to_bytearray(len(bad_float), format_=utils.ValueFormat.UINT8)
     full = bytearray([0x01]) + length + bad_float
     with pytest.raises(ValueError):
         packet.decode(full, value_format=format_)

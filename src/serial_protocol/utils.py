@@ -1,95 +1,88 @@
 #!/usr/bin/env python3
 
-from enum import Enum
-import struct
 
+import struct
+from enum import Enum
+from typing import Union
 
 ########################
 # --- ENUM HELPERS --- #
 ########################
 
-class MaxUInt(Enum):
+
+class ValueFormat(Enum):
     """
-    Enumeration of maximum unsigned integer values with associated byte sizes.
+    Enumeration of supported value formats, including unsigned integers and IEEE 754 floats.
 
-    Members:
-        UINT8:  8-bit unsigned integer (1 byte, max 255)
-        UINT16: 16-bit unsigned integer (2 bytes, max 65535)
-        UINT32: 32-bit unsigned integer (4 bytes, max 4294967295)
-
-    Properties:
-        num_bytes (int): Number of bytes required to represent the value.
-        max_value (int): Maximum value for the unsigned integer type.
+    Each member defines:
+    - The number of bytes
+    - The category ('uint' or 'float')
+    - A string label for documentation/debugging
+    - A struct format character (for float types)
 
     Example:
-        >>> MaxUInt.UINT16.num_bytes
-        2
-        >>> MaxUInt.UINT16.max_value
-        65535
+        >>> ValueFormat.FLOAT32.num_bytes
+        4
+        >>> ValueFormat.UINT16.category
+        'uint'
     """
-    UINT8 = (1, 255)
-    UINT16 = (2, 65535)
-    UINT32 = (4, 4294967295)
+    UINT8 = (1, "uint", "uint8", None)
+    UINT16 = (2, "uint", "uint16", None)
+    UINT32 = (4, "uint", "uint32", None)
+    FLOAT32 = (4, "float", "float32", 'f')
+    FLOAT64 = (8, "float", "float64", 'd')
 
     @property
     def num_bytes(self) -> int:
         return self.value[0]
+
+    @property
+    def category(self) -> str:
+        return self.value[1]
+
+    @property
+    def label(self) -> str:
+        return self.value[2]
+
+    @property
+    def format_char(self) -> str:
+        return self.value[3]
 
     @property
     def max_value(self) -> int:
-        return self.value[1]
+        if self.is_uint():
+            return 2**(self.num_bytes*8) - 1
+        return None
 
+    def is_uint(self) -> bool:
+        return self.category == "uint"
 
-class FloatPrecision(Enum):
-    """
-    Enumeration of IEEE 754 floating point precisions with byte size and format.
+    def is_float(self) -> bool:
+        return self.category == "float"
 
-    Members:
-        FLOAT32: 32-bit (4-byte) single-precision float ('f' format character)
-        FLOAT64: 64-bit (8-byte) double-precision float ('d' format character)
+    @classmethod
+    def coerce(cls, value: Union['ValueFormat', str]) -> 'ValueFormat':
+        """
+        Ensure the input is a ValueFormat enum instance.
 
-    Properties:
-        num_bytes (int): Number of bytes used to represent the float.
-        format_char (str): Format character used for struct packing/unpacking.
+        Args:
+            value (ValueFormat or str): Value to convert, string should be equal to label.
 
-    Example:
-        >>> FloatPrecision.FLOAT64.num_bytes
-        8
-        >>> FloatPrecision.FLOAT64.format_char
-        'd'
-    """
-    FLOAT32 = (4, 'f')  # IEEE 754 single-precision
-    FLOAT64 = (8, 'd')  # IEEE 754 double-precision
+        Returns:
+            ValueFormat: The matched format.
 
-    @property
-    def num_bytes(self) -> int:
-        return self.value[0]
+        Raises:
+            ValueError: If input is not valid.
+        """
+        if isinstance(value, cls):
+            return value
+        for member in cls:
+            if value == member.label:
+                return member
+        raise ValueError(f"Invalid value for {cls.__name__}: {value}")
 
-    @property
-    def format_char(self):
-        return self.value[1]
-
-
-def coerce_enum(value, enum_class):
-    """
-    Ensures that a given value is an instance of the provided Enum class.
-
-    Args:
-        value: The value to check or convert.
-        enum_class (Enum): The target Enum class.
-
-    Returns:
-        Enum: An instance of the Enum class.
-
-    Raises:
-        ValueError: If value cannot be converted to the Enum.
-    """
-    if isinstance(value, enum_class):
-        return value
-    try:
-        return enum_class(value)
-    except ValueError:
-        raise ValueError(f"Invalid value for {enum_class.__name__}.")
+    def __str__(self):
+        return self.label
 
 
 ##########################
@@ -193,13 +186,13 @@ def bytearray_to_decstring(data: bytearray) -> str:
     return " ".join("{:03d}".format(x) for x in data)
 
 
-def int_to_bytearray(value: int, max_uint: MaxUInt, byteorder: str = "little") -> bytearray:
+def int_to_bytearray(value: int, format: ValueFormat, byteorder: str = "little") -> bytearray:
     """
-    Converts an integer into a bytearray based on the MaxUInt limit.
+    Converts an integer into a bytearray based on a value format.
 
     Args:
         value (int): The integer value to convert.
-        max_uint (MaxUInt): The maximum uint type.
+        format (format): The format type. Cannot be FLOAT32 or FLOAT64.
         byteorder (str): Byte order ('little' or 'big'). Default is 'little'.
 
     Returns:
@@ -209,13 +202,15 @@ def int_to_bytearray(value: int, max_uint: MaxUInt, byteorder: str = "little") -
         ValueError: If value is out of bounds.
 
     Example:
-        >>> int_to_bytearray(1025, MaxUInt.UINT16)
+        >>> int_to_bytearray(1025, ValueFormat.UINT16)
         bytearray(b'\x01\x04')
     """
-    max_uint = coerce_enum(value=max_uint, enum_class=MaxUInt)
-    if not (0 <= value <= max_uint.max_value):
-        raise ValueError(f"Value must be in range [0, {max_uint.max_value}].")
-    return bytearray(value.to_bytes(max_uint.num_bytes, byteorder=byteorder))
+    format = ValueFormat.coerce(format)
+    if format.is_float():
+        raise ValueError("The format cannot be FLOAT32 or FLOAT64.")
+    if not (0 <= value <= format.max_value):
+        raise ValueError(f"Value must be in range [0, {format.max_value}].")
+    return bytearray(value.to_bytes(format.num_bytes, byteorder=byteorder))
 
 
 def bytearray_to_int(value: bytearray, byteorder: str = "little") -> int:
@@ -238,45 +233,56 @@ def bytearray_to_int(value: bytearray, byteorder: str = "little") -> int:
     return int.from_bytes(value, byteorder=byteorder)
 
 
-def float_to_bytearray(value: float, precision: FloatPrecision, byteorder: str = "little") -> bytearray:
+def float_to_bytearray(value: float, precision: ValueFormat, byteorder: str = "little") -> bytearray:
     """
-    Converts a float to a bytearray using IEEE 754 format.
+    Convert a float to a bytearray using IEEE 754 format.
 
     Args:
-        value (float): The float to convert.
-        precision (FloatPrecision): Desired float precision.
-        byteorder (str): Byte order ('little' or 'big'). Default is 'little'.
+        value (float): The float to encode.
+        precision (ValueFormat): Must be FLOAT32 or FLOAT64.
+        byteorder (str): Byte order ('little' or 'big').
 
     Returns:
-        bytearray: The resulting bytearray.
+        bytearray: Encoded float bytes.
+
+    Raises:
+        ValueError: If precision is not a valid float format.
 
     Example:
-        >>> float_to_bytearray(3.14, FloatPrecision.FLOAT32)
-        bytearray(b'\xc3\xf5H@')
+        >>> float_to_bytearray(3.14, ValueFormat.FLOAT32)
+        bytearray(b'\\xc3\\xf5H@')
     """
-    precision = coerce_enum(value=precision, enum_class=FloatPrecision)
+    precision = ValueFormat.coerce(value=precision)
+    if not precision.is_float():
+        raise ValueError("The precision must be FLOAT32 or FLOAT64.")
     packed = struct.pack(precision.format_char, value)
     return bytearray(packed if byteorder == "little" else packed[::-1])
 
 
-def bytearray_to_float(value: bytearray, precision: FloatPrecision, byteorder: str = "little") -> float:
+def bytearray_to_float(value: bytearray, precision: ValueFormat, byteorder: str = "little") -> float:
     """
-    Converts a bytearray to a float using IEEE 754 format.
+    Decode a float from a bytearray using IEEE 754 format.
 
     Args:
-        value (bytearray): The bytearray to convert.
-        precision (FloatPrecision): Desired float precision.
-        byteorder (str): Byte order ('little' or 'big'). Default is 'little'.
+        value (bytearray): Raw float bytes.
+        precision (ValueFormat): Must be FLOAT32 or FLOAT64.
+        byteorder (str): Byte order ('little' or 'big').
 
     Returns:
-        float: The resulting float.
+        float: Decoded float value.
+
+    Raises:
+        TypeError: If input is not a bytearray.
+        ValueError: If precision is not a valid float format.
 
     Example:
-        >>> bytearray_to_float(bytearray(b'\xc3\xf5H@'), FloatPrecision.FLOAT32)
+        >>> bytearray_to_float(bytearray(b'\\xc3\\xf5H@'), ValueFormat.FLOAT32)
         3.14
     """
     if not isinstance(value, bytearray):
         raise TypeError("Input value must be of type bytearray.")
-    precision = coerce_enum(value=precision, enum_class=FloatPrecision)
+    precision = ValueFormat.coerce(value=precision)
+    if not precision.is_float():
+        raise ValueError("The precision must be FLOAT32 or FLOAT64.")
     byte_seq = bytes(value if byteorder == "little" else value[::-1])
     return struct.unpack(precision.format_char, byte_seq)[0]

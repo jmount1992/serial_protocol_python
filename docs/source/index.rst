@@ -11,6 +11,7 @@ Welcome to Serial Protocol - Python's Documentation!
    :caption: Contents:
 
    cobs.rst
+   tlv.rst
    utils.rst
 
 

@@ -15,10 +15,10 @@ class ValueFormat(Enum):
     Enumeration of supported value formats, including unsigned integers and IEEE 754 floats.
 
     Each member defines:
-    - The number of bytes
-    - The category ('uint' or 'float')
-    - A string label for documentation/debugging
-    - A struct format character (for float types)
+    - Number of bytes (1, 2, 4, or 8)
+    - Category: either 'uint' or 'float'
+    - A descriptive label (e.g., 'uint16')
+    - A format character used by `struct` (only for float types)
 
     Example:
         >>> ValueFormat.FLOAT32.num_bytes
@@ -34,30 +34,37 @@ class ValueFormat(Enum):
 
     @property
     def num_bytes(self) -> int:
+        """Number of bytes used to store the value."""
         return self.value[0]
 
     @property
     def category(self) -> str:
+        """The category of the value type: 'uint' or 'float'."""
         return self.value[1]
 
     @property
     def label(self) -> str:
+        """A human-readable string label for the format."""
         return self.value[2]
 
     @property
     def format_char(self) -> str:
+        """Struct format character used for float encoding/decoding."""
         return self.value[3]
 
     @property
     def max_value(self) -> int:
+        """Maximum value (only valid for unsigned int types)."""
         if self.is_uint():
-            return 2**(self.num_bytes*8) - 1
+            return 2**(self.num_bytes * 8) - 1
         return None
 
     def is_uint(self) -> bool:
+        """Return True if format represents an unsigned integer."""
         return self.category == "uint"
 
     def is_float(self) -> bool:
+        """Return True if format represents a float."""
         return self.category == "float"
 
     @classmethod
@@ -66,13 +73,13 @@ class ValueFormat(Enum):
         Ensure the input is a ValueFormat enum instance.
 
         Args:
-            value (ValueFormat or str): Value to convert, string should be equal to label.
+            value (ValueFormat or str): Value to convert. If str, must match a member's label.
 
         Returns:
-            ValueFormat: The matched format.
+            ValueFormat: The coerced enum value.
 
         Raises:
-            ValueError: If input is not valid.
+            ValueError: If input doesn't match any label.
         """
         if isinstance(value, cls):
             return value

@@ -5,21 +5,12 @@ from typing import Union
 from serial_protocol import utils
 
 
-class TLVValueReturnType(Enum):
-    """
-    Supported return types for decoding the value portion of a TLV packet.
-    """
-    BYTEARRAY = "bytearray"
-    INT = "int"
-    FLOAT = "float"
-
-
 class TLVPacket:
     """
     Type-Length-Value packet encoder and decoder.
 
     This class supports configurable field widths for both the data length and encode/decode value
-    fields using `ValueFormat`, and supports IEEE 754 float encoding via `FloatPrecision`.
+    fields using `ValueFormat`.
 
     Example:
         >>> tlv = TLVPacket()
@@ -30,7 +21,15 @@ class TLVPacket:
 
     def __init__(self,
                  max_data_length: utils.ValueFormat = utils.ValueFormat.UINT8):
+        """
+        Initialize a TLV packet encoder/decoder.
 
+        Args:
+            max_data_length (ValueFormat): Format used to encode the length field.
+
+        Raises:
+            ValueError: If the format is not an unsigned integer type.
+        """
         self.__max_data_length = utils.ValueFormat.coerce(max_data_length)
         if not self.max_data_length.is_uint():
             raise ValueError("The max data length must be of category uint "
@@ -38,6 +37,7 @@ class TLVPacket:
 
     @property
     def max_data_length(self) -> utils.ValueFormat:
+        """Format used to encode the length field (must be an unsigned integer)."""
         return self.__max_data_length
 
     @max_data_length.setter
@@ -54,6 +54,7 @@ class TLVPacket:
         Args:
             type_ (int | bytearray): Type field (must fit in one byte).
             value_ (int | float | bytearray): Value field to encode.
+            format_ (ValueFormat): Format of the value.
 
         Returns:
             bytearray: Encoded TLV packet.
@@ -84,8 +85,8 @@ class TLVPacket:
             tuple[int, int, int|float|bytearray]: (type, length, decoded value)
 
         Raises:
-            TypeError: If inputs are of incorrect types.
-            ValueError: If the packet is malformed or decoding fails.
+            TypeError: If input is not a bytearray.
+            ValueError: If packet structure is invalid or decoding fails.
 
         Example:
             >>> tlv = TLVPacket()
@@ -112,7 +113,7 @@ class TLVPacket:
 
         value_bytes = packet[num_len_bytes + 1:]
 
-        # --- Handle decoding based on ValueFormat
+        # Handle decoding based on ValueFormat
         if value_format is None:
             value_ = value_bytes
         else:

@@ -67,7 +67,7 @@ def test_bytearray_to_decstring():
 
 
 # --- Integer Conversion ---
-@pytest.mark.parametrize("value, format, expected", [
+@pytest.mark.parametrize("value, format_, expected", [
     (0, utils.ValueFormat.UINT8, bytearray([0x00])),
     (8, utils.ValueFormat.UINT8, bytearray([0x08])),
     (255, utils.ValueFormat.UINT8, bytearray([0xFF])),
@@ -78,8 +78,8 @@ def test_bytearray_to_decstring():
     (8, utils.ValueFormat.UINT32, bytearray([0x08, 0x00, 0x00, 0x00])),
     (4294967295, utils.ValueFormat.UINT32, bytearray([0xFF, 0xFF, 0xFF, 0xFF]))
 ])
-def test_int_to_bytearray(value, format, expected):
-    assert utils.int_to_bytearray(value, format) == expected
+def test_int_to_bytearray(value, format_, expected):
+    assert utils.int_to_bytearray(value, format_) == expected
 
 
 @pytest.mark.parametrize("value, max_value", [

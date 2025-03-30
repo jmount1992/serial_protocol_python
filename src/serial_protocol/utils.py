@@ -186,13 +186,13 @@ def bytearray_to_decstring(data: bytearray) -> str:
     return " ".join("{:03d}".format(x) for x in data)
 
 
-def int_to_bytearray(value: int, format: ValueFormat, byteorder: str = "little") -> bytearray:
+def int_to_bytearray(value: int, format_: ValueFormat, byteorder: str = "little") -> bytearray:
     """
     Converts an integer into a bytearray based on a value format.
 
     Args:
         value (int): The integer value to convert.
-        format (format): The format type. Cannot be FLOAT32 or FLOAT64.
+        format_ (format): The format type. Cannot be FLOAT32 or FLOAT64.
         byteorder (str): Byte order ('little' or 'big'). Default is 'little'.
 
     Returns:
@@ -205,12 +205,12 @@ def int_to_bytearray(value: int, format: ValueFormat, byteorder: str = "little")
         >>> int_to_bytearray(1025, ValueFormat.UINT16)
         bytearray(b'\x01\x04')
     """
-    format = ValueFormat.coerce(format)
-    if format.is_float():
+    format_ = ValueFormat.coerce(format_)
+    if format_.is_float():
         raise ValueError("The format cannot be FLOAT32 or FLOAT64.")
-    if not (0 <= value <= format.max_value):
-        raise ValueError(f"Value must be in range [0, {format.max_value}].")
-    return bytearray(value.to_bytes(format.num_bytes, byteorder=byteorder))
+    if not (0 <= value <= format_.max_value):
+        raise ValueError(f"Value must be in range [0, {format_.max_value}].")
+    return bytearray(value.to_bytes(format_.num_bytes, byteorder=byteorder))
 
 
 def bytearray_to_int(value: bytearray, byteorder: str = "little") -> int:

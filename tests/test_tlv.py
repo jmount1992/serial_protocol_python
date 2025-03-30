@@ -67,8 +67,8 @@ def test_invalid_setters(attr, invalid_value):
 ))
 def test_encode_decode_int_roundtrip(max_length, format_):
     packet = tlv.TLVPacket(max_data_length=max_length)
-    type_ = random.randint(0, 255)
-    value_ = random.randint(0, format_.max_value)
+    type_ = random.randint(0, 255)  #nosec
+    value_ = random.randint(0, format_.max_value)  #nosec
     encoded = packet.encode(type_, value_, format_)
     decoded = packet.decode(encoded, value_format=format_)
     assert decoded[0] == type_

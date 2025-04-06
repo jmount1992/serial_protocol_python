@@ -37,6 +37,7 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="packet.html">Serial Packet</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cobs.html">COBS Encode/Decode</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tlv.html">TLV Packet</a></li>
 <li class="toctree-l1"><a class="reference internal" href="utils.html">Utilities</a></li>
@@ -89,8 +90,14 @@
 <h2 id="_">_</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="tlv.html#serial_protocol.tlv.TLVPacket.__init__">__init__() (serial_protocol.tlv.TLVPacket method)</a>
+      <li><a href="packet.html#serial_protocol.packet.SerialPacket.__init__">__init__() (serial_protocol.packet.SerialPacket method)</a>
+
+      <ul>
+        <li><a href="packet.html#serial_protocol.packet.SerialPacketStruct.__init__">(serial_protocol.packet.SerialPacketStruct method)</a>
 </li>
+        <li><a href="tlv.html#serial_protocol.tlv.TLVPacket.__init__">(serial_protocol.tlv.TLVPacket method)</a>
+</li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
@@ -106,6 +113,8 @@
       <li><a href="utils.html#serial_protocol.utils.bytearray_to_hexstring">bytearray_to_hexstring() (in module serial_protocol.utils)</a>
 </li>
       <li><a href="utils.html#serial_protocol.utils.bytearray_to_int">bytearray_to_int() (in module serial_protocol.utils)</a>
+</li>
+      <li><a href="utils.html#serial_protocol.utils.bytearray_to_value">bytearray_to_value() (in module serial_protocol.utils)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -128,12 +137,16 @@
       <li><a href="cobs.html#serial_protocol.cobs.decode">decode() (in module serial_protocol.cobs)</a>
 
       <ul>
+        <li><a href="packet.html#serial_protocol.packet.SerialPacket.decode">(serial_protocol.packet.SerialPacket method)</a>
+</li>
         <li><a href="tlv.html#serial_protocol.tlv.TLVPacket.decode">(serial_protocol.tlv.TLVPacket method)</a>
 </li>
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="cobs.html#serial_protocol.cobs.decode_bytearray">decode_bytearray() (in module serial_protocol.cobs)</a>
+</li>
+      <li><a href="packet.html#serial_protocol.packet.SerialPacketStruct.device_id">device_id (serial_protocol.packet.SerialPacketStruct attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -144,6 +157,8 @@
       <li><a href="cobs.html#serial_protocol.cobs.encode">encode() (in module serial_protocol.cobs)</a>
 
       <ul>
+        <li><a href="packet.html#serial_protocol.packet.SerialPacket.encode">(serial_protocol.packet.SerialPacket method)</a>
+</li>
         <li><a href="tlv.html#serial_protocol.tlv.TLVPacket.encode">(serial_protocol.tlv.TLVPacket method)</a>
 </li>
       </ul></li>
@@ -164,6 +179,8 @@
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="utils.html#serial_protocol.utils.float_to_bytearray">float_to_bytearray() (in module serial_protocol.utils)</a>
+</li>
+      <li><a href="packet.html#serial_protocol.packet.SerialPacketStruct.format_">format_ (serial_protocol.packet.SerialPacketStruct attribute)</a>
 </li>
       <li><a href="utils.html#serial_protocol.utils.ValueFormat.format_char">format_char (serial_protocol.utils.ValueFormat property)</a>
 </li>
@@ -215,6 +232,8 @@
       <ul>
         <li><a href="cobs.html#module-serial_protocol.cobs">serial_protocol.cobs</a>
 </li>
+        <li><a href="packet.html#module-serial_protocol.packet">serial_protocol.packet</a>
+</li>
         <li><a href="tlv.html#module-serial_protocol.tlv">serial_protocol.tlv</a>
 </li>
         <li><a href="utils.html#module-serial_protocol.utils">serial_protocol.utils</a>
@@ -242,6 +261,13 @@
 </li>
       </ul></li>
       <li>
+    serial_protocol.packet
+
+      <ul>
+        <li><a href="packet.html#module-serial_protocol.packet">module</a>
+</li>
+      </ul></li>
+      <li>
     serial_protocol.tlv
 
       <ul>
@@ -257,6 +283,10 @@
         <li><a href="utils.html#module-serial_protocol.utils">module</a>
 </li>
       </ul></li>
+      <li><a href="packet.html#serial_protocol.packet.SerialPacket">SerialPacket (class in serial_protocol.packet)</a>
+</li>
+      <li><a href="packet.html#serial_protocol.packet.SerialPacketStruct">SerialPacketStruct (class in serial_protocol.packet)</a>
+</li>
   </ul></td>
 </tr></table>
 
@@ -264,6 +294,10 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="tlv.html#serial_protocol.tlv.TLVPacket">TLVPacket (class in serial_protocol.tlv)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="packet.html#serial_protocol.packet.SerialPacketStruct.type_">type_ (serial_protocol.packet.SerialPacketStruct attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -284,6 +318,10 @@
 
 <h2 id="V">V</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="packet.html#serial_protocol.packet.SerialPacketStruct.value_">value_ (serial_protocol.packet.SerialPacketStruct attribute)</a>
+</li>
+  </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="utils.html#serial_protocol.utils.ValueFormat">ValueFormat (class in serial_protocol.utils)</a>
 </li>

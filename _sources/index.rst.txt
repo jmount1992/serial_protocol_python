@@ -10,6 +10,7 @@ Welcome to Serial Protocol - Python's Documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   packet.rst
    cobs.rst
    tlv.rst
    utils.rst

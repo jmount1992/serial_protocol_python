@@ -37,6 +37,7 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../packet.html">Serial Packet</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../cobs.html">COBS Encode/Decode</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../tlv.html">TLV Packet</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../utils.html">Utilities</a></li>
@@ -116,7 +117,7 @@
 <div class="viewcode-block" id="TLVPacket.encode"><a class="viewcode-back" href="../../tlv.html#serial_protocol.tlv.TLVPacket.encode">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">encode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
                <span class="n">type_</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">bytearray</span><span class="p">],</span>
                <span class="n">value_</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">bytearray</span><span class="p">],</span>
-               <span class="n">format_</span><span class="p">:</span> <span class="n">utils</span><span class="o">.</span><span class="n">ValueFormat</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">ValueFormat</span><span class="o">.</span><span class="n">UINT8</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytearray</span><span class="p">:</span>
+               <span class="n">format_</span><span class="p">:</span> <span class="n">utils</span><span class="o">.</span><span class="n">ValueFormat</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytearray</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Encode a TLV packet.</span>
 
@@ -186,18 +187,7 @@
         <span class="k">if</span> <span class="n">value_format</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">value_</span> <span class="o">=</span> <span class="n">value_bytes</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">value_format</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">ValueFormat</span><span class="o">.</span><span class="n">coerce</span><span class="p">(</span><span class="n">value_format</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">value_format</span><span class="o">.</span><span class="n">is_uint</span><span class="p">():</span>
-                <span class="n">value_</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">bytearray_to_int</span><span class="p">(</span><span class="n">value_bytes</span><span class="p">)</span>
-            <span class="k">elif</span> <span class="n">value_format</span><span class="o">.</span><span class="n">is_float</span><span class="p">():</span>
-                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value_bytes</span><span class="p">)</span> <span class="o">!=</span> <span class="n">value_format</span><span class="o">.</span><span class="n">num_bytes</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">&quot;Expected </span><span class="si">{</span><span class="n">value_format</span><span class="o">.</span><span class="n">num_bytes</span><span class="si">}</span><span class="s2"> bytes for float format &quot;</span>
-                        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">value_format</span><span class="o">.</span><span class="n">label</span><span class="si">}</span><span class="s2">, got </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">value_bytes</span><span class="p">)</span><span class="si">}</span><span class="s2"> bytes.&quot;</span>
-                    <span class="p">)</span>
-                <span class="n">value_</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">bytearray_to_float</span><span class="p">(</span><span class="n">value_bytes</span><span class="p">,</span> <span class="n">value_format</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported value format: </span><span class="si">{</span><span class="n">value_format</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">value_</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">bytearray_to_value</span><span class="p">(</span><span class="n">value_bytes</span><span class="p">,</span> <span class="n">value_format</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">type_</span><span class="p">,</span> <span class="n">length_</span><span class="p">,</span> <span class="n">value_</span></div>
 

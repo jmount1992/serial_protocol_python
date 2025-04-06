@@ -39,6 +39,7 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="packet.html">Serial Packet</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cobs.html">COBS Encode/Decode</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tlv.html">TLV Packet</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Utilities</a><ul class="simple">
@@ -286,6 +287,39 @@
 <p class="rubric">Example</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">bytearray_to_int</span><span class="p">(</span><span class="nb">bytearray</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">]))</span>
 <span class="go">1025</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="serial_protocol.utils.bytearray_to_value">
+<span class="sig-prename descclassname"><span class="pre">serial_protocol.utils.</span></span><span class="sig-name descname"><span class="pre">bytearray_to_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bytearray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">format_</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#serial_protocol.utils.ValueFormat" title="serial_protocol.utils.ValueFormat"><span class="pre">ValueFormat</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/serial_protocol/utils.html#bytearray_to_value"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#serial_protocol.utils.bytearray_to_value" title="Permalink to this definition"></a></dt>
+<dd><p>Convert a bytearray into a Python value (int or float) based on the specified ValueFormat.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>bytearray</em>) – The bytearray to decode.</p></li>
+<li><p><strong>format</strong> (<a class="reference internal" href="#serial_protocol.utils.ValueFormat" title="serial_protocol.utils.ValueFormat"><em>ValueFormat</em></a>) – The format describing how to interpret the data.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The decoded value.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>int | float</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>ValueError</strong> – If the format is not supported, or if data length does not match float size.</p></li>
+<li><p><strong>TypeError</strong> – If input types are incorrect.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">bytearray_to_value</span><span class="p">(</span><span class="nb">bytearray</span><span class="p">([</span><span class="mh">0x01</span><span class="p">,</span> <span class="mh">0x00</span><span class="p">]),</span> <span class="n">ValueFormat</span><span class="o">.</span><span class="n">UINT16</span><span class="p">)</span>
+<span class="go">1</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">bytearray_to_value</span><span class="p">(</span><span class="nb">bytearray</span><span class="p">(</span><span class="n">struct</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="s1">&#39;f&#39;</span><span class="p">,</span> <span class="mf">3.14</span><span class="p">)),</span> <span class="n">ValueFormat</span><span class="o">.</span><span class="n">FLOAT32</span><span class="p">)</span>
+<span class="go">3.14</span>
 </pre></div>
 </div>
 </dd></dl>

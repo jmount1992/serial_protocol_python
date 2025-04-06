@@ -108,36 +108,19 @@ class SerialPacket:
             TypeError: If the data_ input is not a bytearray.
             ValueError: If CRC validation fails or TLV length field is inconsistent.
         """
+        # Check input type and init return value
+        retval = SerialPacketStruct()
         if not isinstance(data_, bytearray):
             raise TypeError("Input must be a bytearray")
 
-        # Perform COBS decoding if necessary
-        if cobs_encoded:
-            data_ = cobs.decode(data_)
-
-        # Verify Checksum
-        num_bytes = self._crc_format.num_bytes
-        sent_checksum = data_[-num_bytes:]
-        data_ = data_[:-num_bytes]
-        checksum = self._crc_calc.checksum(data_)
-        checksum = utils.int_to_bytearray(checksum, self._crc_format)
-        if checksum != sent_checksum:
-            raise ValueError("Checksum verification failed. "
-                             f"Received checksum: {utils.bytearray_to_hexstring(sent_checksum)}. "
-                             f"Calculated checksum: {utils.bytearray_to_hexstring(checksum)}.")
-
-        # Extract Device ID if necessary
-        retval = SerialPacketStruct()
+        data_ = cobs.decode(data_) if cobs_encoded else data_
+        data_ = self._verify_and_extract_checksum(data_)
         if device_id:
             retval.device_id = data_[0]
             data_ = data_[1:]
 
         # Validate length
-        max_data_length = self._tlv_packet.max_data_length
-        num_len_bytes = max_data_length.num_bytes
-        length_field = utils.bytearray_to_int(data_[1:1+num_len_bytes], "little")
-        if length_field != len(data_) - 1 - num_len_bytes:
-            raise ValueError("Invalid length")
+        num_len_bytes = self._validate_data_length(data_)        
 
         # Extract Data
         retval.type_ = data_[0]
@@ -173,3 +156,53 @@ class SerialPacket:
         if cobs_encode:
             packet_ = cobs.encode(packet_)
         return packet_
+
+    def _verify_and_extract_checksum(self, data_: bytearray) -> bytearray:
+        """
+        Validate the CRC checksum and return the data without the checksum.
+
+        Args:
+            data_ (bytearray): Full packet including checksum.
+
+        Returns:
+            bytearray: Packet content excluding checksum.
+
+        Raises:
+            ValueError: If checksum does not match.
+        """
+        num_bytes = self._crc_format.num_bytes
+        sent_checksum = data_[-num_bytes:]
+        data_ = data_[:-num_bytes]
+        checksum = self._crc_calc.checksum(data_)
+        expected = utils.int_to_bytearray(checksum, self._crc_format)
+
+        if expected != sent_checksum:
+            raise ValueError("Checksum verification failed. "
+                             f"Received: {utils.bytearray_to_hexstring(sent_checksum)}, "
+                             f"Expected: {utils.bytearray_to_hexstring(expected)}")
+
+        return data_
+
+    def _validate_data_length(self, data_: bytearray) -> int:
+        """
+        Validates that the length field in the TLV header matches the actual payload length.
+
+        The TLV header is assumed to have the format:
+            [type (1 byte)] [length (N bytes)] [value (length bytes)]
+
+        Args:
+            data_ (bytearray): The TLV-encoded packet data (excluding device ID and checksum).
+
+        Returns:
+            int: Number of bytes used by the length field (derived from max_data_length format).
+
+        Raises:
+            ValueError: If the length field does not match the actual value length.
+        """
+        max_data_length = self._tlv_packet.max_data_length
+        num_len_bytes = max_data_length.num_bytes
+        length_field = utils.bytearray_to_int(data_[1:1+num_len_bytes], "little")
+        if length_field != len(data_) - 1 - num_len_bytes:
+            raise ValueError("Invalid length")
+
+        return num_len_bytes

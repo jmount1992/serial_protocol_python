@@ -120,7 +120,7 @@ class SerialPacket:
             data_ = data_[1:]
 
         # Validate length
-        num_len_bytes = self._validate_data_length(data_)        
+        num_len_bytes = self._validate_data_length(data_)    
 
         # Extract Data
         retval.type_ = data_[0]

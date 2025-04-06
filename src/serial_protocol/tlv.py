@@ -47,7 +47,7 @@ class TLVPacket:
     def encode(self,
                type_: Union[int, bytearray],
                value_: Union[int, float, bytearray],
-               format_: utils.ValueFormat = utils.ValueFormat.UINT8) -> bytearray:
+               format_: utils.ValueFormat) -> bytearray:
         """
         Encode a TLV packet.
 
@@ -117,18 +117,7 @@ class TLVPacket:
         if value_format is None:
             value_ = value_bytes
         else:
-            value_format = utils.ValueFormat.coerce(value_format)
-            if value_format.is_uint():
-                value_ = utils.bytearray_to_int(value_bytes)
-            elif value_format.is_float():
-                if len(value_bytes) != value_format.num_bytes:
-                    raise ValueError(
-                        f"Expected {value_format.num_bytes} bytes for float format "
-                        f"{value_format.label}, got {len(value_bytes)} bytes."
-                    )
-                value_ = utils.bytearray_to_float(value_bytes, value_format)
-            else:
-                raise ValueError(f"Unsupported value format: {value_format}")
+            value_ = utils.bytearray_to_value(value_bytes, value_format)
 
         return type_, length_, value_
 

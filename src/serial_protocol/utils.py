@@ -293,3 +293,40 @@ def bytearray_to_float(value: bytearray, precision: ValueFormat, byteorder: str 
         raise ValueError("The precision must be FLOAT32 or FLOAT64.")
     byte_seq = bytes(value if byteorder == "little" else value[::-1])
     return struct.unpack(precision.format_char, byte_seq)[0]
+
+
+def bytearray_to_value(data_: bytearray, format_: ValueFormat) -> Union[int, float]:
+    """
+    Convert a bytearray into a Python value (int or float) based on the specified ValueFormat.
+
+    Args:
+        data_ (bytearray): The bytearray to decode.
+        format_ (ValueFormat): The format describing how to interpret the data.
+
+    Returns:
+        int | float: The decoded value.
+
+    Raises:
+        ValueError: If the format is not supported, or if data length does not match float size.
+        TypeError: If input types are incorrect.
+
+    Example:
+        >>> bytearray_to_value(bytearray([0x01, 0x00]), ValueFormat.UINT16)
+        1
+        >>> bytearray_to_value(bytearray(struct.pack('f', 3.14)), ValueFormat.FLOAT32)
+        3.14
+    """
+    format_ = ValueFormat.coerce(format_)
+    if format_.is_uint():
+        value_ = bytearray_to_int(data_)
+    elif format_.is_float():
+        if len(data_) != format_.num_bytes:
+            raise ValueError(
+                f"Expected {format_.num_bytes} bytes for float format "
+                f"{format_.label}, got {len(data_)} bytes."
+            )
+        value_ = bytearray_to_float(data_, format_)
+    else:
+        raise ValueError(f"Unsupported value format: {format_}")
+
+    return value_

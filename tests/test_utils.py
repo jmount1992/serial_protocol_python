@@ -136,3 +136,21 @@ def test_bytearray_to_float(value, precision):
     result = utils.bytearray_to_float(value, precision)
     assert isinstance(result, float)
     assert abs(result - 3.14) < 1e-6
+
+
+# --- Generic Conversion --- #
+@pytest.mark.parametrize("format_, value, expected", [
+    (utils.ValueFormat.UINT8, bytearray([0x2A]), 42),
+    (utils.ValueFormat.UINT16, bytearray([0x01, 0x02]), 513),
+    (utils.ValueFormat.UINT32, bytearray([0x78, 0x56, 0x34, 0x12]), 0x12345678),
+    (utils.ValueFormat.FLOAT32, bytearray(struct.pack('f', 3.14)), pytest.approx(3.14, rel=1e-6)),
+    (utils.ValueFormat.FLOAT64, bytearray(struct.pack('d', 3.14)), pytest.approx(3.14, rel=1e-9)),
+])
+def test_bytearray_to_value_valid(format_, value, expected):
+    result = utils.bytearray_to_value(value, format_)
+    assert result == expected
+
+
+def test_bytearray_to_value_invalid_float_length():
+    with pytest.raises(ValueError, match="Expected 4 bytes for float format float32"):
+        utils.bytearray_to_value(bytearray([0x00, 0x00]), utils.ValueFormat.FLOAT32)
